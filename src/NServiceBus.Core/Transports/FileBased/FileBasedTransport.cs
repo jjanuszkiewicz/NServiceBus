@@ -4,9 +4,9 @@
     using System.Collections.Generic;
     using System.IO;
     using NServiceBus.Performance.TimeToBeReceived;
-    using Settings;
-    using Transports;
-    using Transports.FileBased;
+    using NServiceBus.Settings;
+    using NServiceBus.Transports;
+    using NServiceBus.Transports.FileBased;
 
     /// <summary>
     /// A file based transport.
@@ -14,13 +14,9 @@
     public class FileBasedTransport : TransportDefinition
     {
         /// <summary>
-        /// Gives implementations access to the <see cref="BusConfiguration"/> instance at configuration time.
+        /// Gets an example connection string to use when reporting lack of configured connection string to the user.
         /// </summary>
-        protected internal override void Configure(BusConfiguration config)
-        {
-            config.EnableFeature<FileBasedTransportConfigurator>();
-        }
-
+        public override string ExampleConnectionStringForErrorMessage { get; } = "";
 
         /// <summary>
         /// Returns the discriminator for this endpoint instance.
@@ -45,11 +41,31 @@
         }
 
         /// <summary>
+        /// Configures transport for receiving.
+        /// </summary>
+        protected internal override void ConfigureForReceiving(TransportReceivingConfigurationContext context)
+        {
+            context.SetMessagePumpFactory(ce => new MessagePump());
+            context.SetQueueCreatorFactory(() => new QueueCreator());
+        }
+
+        /// <summary>
+        /// Configures transport for sending.
+        /// </summary>
+        protected internal override void ConfigureForSending(TransportSendingConfigurationContext context)
+        {
+            context.SetDispatcherFactory(() => new Dispatcher());
+        }
+
+        /// <summary>
         /// Returns the list of supported delivery constraints for this transport.
         /// </summary>
         public override IEnumerable<Type> GetSupportedDeliveryConstraints()
         {
-            return new List<Type> { typeof(DiscardIfNotReceivedBefore) };
+            return new List<Type>
+            {
+                typeof(DiscardIfNotReceivedBefore)
+            };
         }
 
         /// <summary>

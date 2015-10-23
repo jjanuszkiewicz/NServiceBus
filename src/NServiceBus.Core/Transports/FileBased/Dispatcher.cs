@@ -10,7 +10,7 @@ namespace NServiceBus.Transports.FileBased
 
     class Dispatcher : IDispatchMessages
     {
-        public Task Dispatch(IEnumerable<TransportOperation> outgoingMessages, ReadOnlyContextBag context)
+        public Task Dispatch(IEnumerable<TransportOperation> outgoingMessages, ContextBag context)
         {
             foreach (var transportOperation in outgoingMessages)
             {

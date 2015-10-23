@@ -158,7 +158,7 @@
                     var context = new ContextBag();
                     context.Set(transaction);
 
-                    var pushContext = new PushContext(new IncomingMessage(messageId, headers, bodyStream), context);
+                    var pushContext = new PushContext(messageId, headers, bodyStream, context);
                     await pipeline(pushContext).ConfigureAwait(false);
                 }
 
