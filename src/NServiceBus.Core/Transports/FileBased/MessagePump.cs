@@ -142,11 +142,14 @@
                 var bodyPath = message.First();
                 var headers = DeserializeHeaders(message.Skip(1).ToArray());
 
-                string ttbr;
+                string ttbrString;
 
-                if (headers.TryGetValue(Headers.TimeToBeReceived, out ttbr))
+                if (headers.TryGetValue(Headers.TimeToBeReceived, out ttbrString))
                 {
-                    if (DateTimeExtensions.ToUtcDateTime(ttbr) < DateTime.UtcNow)
+                    var ttbr = TimeSpan.Parse(ttbrString);
+                    var sentTime = File.GetCreationTimeUtc(transaction.FileToProcess); //file.move preserves create time
+
+                    if (sentTime + ttbr < DateTime.UtcNow)
                     {
                         transaction.Commit();
                         return;
