@@ -52,7 +52,13 @@ namespace NServiceBus.Transports.FileBased
                 }
                 else
                 {
-                    File.WriteAllLines(messagePath, messageContents);
+
+                    var tempFile = Path.GetTempFileName();
+
+                    //write to temp file first so we can do a atomic move 
+                    //this avoids the file being locked when the receiver tries to process it
+                    File.WriteAllLines(tempFile, messageContents);
+                    File.Move(tempFile, messagePath);
                 }
             }
 
