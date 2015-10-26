@@ -2829,6 +2829,15 @@ namespace NServiceBus.Transports
         public NServiceBus.Transports.DispatchConsistency RequiredDispatchConsistency { get; }
     }
 }
+namespace NServiceBus.Transports.FileBased
+{
+    public class Header
+    {
+        public Header() { }
+        public string Key { get; set; }
+        public string Value { get; set; }
+    }
+}
 namespace NServiceBus.Transports.Msmq.Config
 {
     public class MsmqSettings

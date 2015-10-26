@@ -3,9 +3,8 @@ namespace NServiceBus.Transports.FileBased
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Threading.Tasks;
-    using Extensibility;
+    using NServiceBus.Extensibility;
     using NServiceBus.Routing;
 
     class Dispatcher : IDispatchMessages
@@ -32,11 +31,9 @@ namespace NServiceBus.Transports.FileBased
 
                 var messageContents = new List<string>
                 {
-                    bodyPath
+                    bodyPath,
+                    HeaderSerializer.ToXml(transportOperation.Message.Headers)
                 };
-
-                //todo: handle new lines in headers
-                messageContents.AddRange(transportOperation.Message.Headers.SelectMany(kvp => new[] { kvp.Key, kvp.Value }));
 
                 DirectoryBasedTransaction transaction;
 
@@ -44,15 +41,11 @@ namespace NServiceBus.Transports.FileBased
 
                 if (transportOperation.DispatchOptions.RequiredDispatchConsistency != DispatchConsistency.Isolated &&
                     context.TryGet(out transaction))
-                {
-                    //store the original destination
-                    messageContents.Add(messagePath);
-
+                {               
                     transaction.Enlist(messagePath, messageContents);
                 }
                 else
                 {
-
                     var tempFile = Path.GetTempFileName();
 
                     //write to temp file first so we can do a atomic move 

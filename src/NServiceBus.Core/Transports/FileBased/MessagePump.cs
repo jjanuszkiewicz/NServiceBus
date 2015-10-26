@@ -140,7 +140,7 @@
             {
                 var message = File.ReadAllLines(transaction.FileToProcess);
                 var bodyPath = message.First();
-                var headers = DeserializeHeaders(message.Skip(1).ToArray());
+                var headers = HeaderSerializer.FromString(string.Join("", message.Skip(1)));
 
                 string ttbrString;
 
