@@ -94,7 +94,7 @@
                 {
                     filesFound = true;
 
-                    var messageId = Path.GetFileNameWithoutExtension(filePath);
+                    var nativeMessageId = Path.GetFileNameWithoutExtension(filePath);
 
                     var transaction = new DirectoryBasedTransaction(path);
 
@@ -106,7 +106,7 @@
                     {
                         try
                         {
-                            await ProcessFile(transaction, messageId);
+                            await ProcessFile(transaction, nativeMessageId);
 
                             transaction.Complete();
                         }
@@ -171,17 +171,6 @@
             {
                 transaction.Rollback();
             }
-        }
-
-        Dictionary<string, string> DeserializeHeaders(string[] headerLines)
-        {
-            var headers = new Dictionary<string, string>();
-            for (var i = 0; i < headerLines.Count() / 2; i++)
-            {
-                var index = i * 2;
-                headers.Add(headerLines[index], headerLines[index + 1]);
-            }
-            return headers;
         }
 
         CancellationToken cancellationToken;
