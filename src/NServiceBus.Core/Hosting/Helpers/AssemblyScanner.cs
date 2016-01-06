@@ -7,6 +7,7 @@ namespace NServiceBus.Hosting.Helpers
     using System.Reflection;
     using System.Runtime.CompilerServices;
     using System.Text;
+    using NServiceBus.Logging;
 
     /// <summary>
     ///   Helpers for assembly scanning operations
@@ -39,7 +40,7 @@ namespace NServiceBus.Hosting.Helpers
         /// </summary>
         public List<Assembly> MustReferenceAtLeastOneAssembly { get; private set; }
 
-        
+
 
         /// <summary>
         ///     Traverses the specified base directory including all sub-directories, generating a list of assemblies that can be
@@ -154,6 +155,7 @@ namespace NServiceBus.Hosting.Helpers
                     throw new Exception(errorMessage);
                 }
 
+                Logger.Error("Could not scan assemblies for types", e);
                 return;
             }
 
@@ -176,13 +178,13 @@ namespace NServiceBus.Hosting.Helpers
             {
                 return true;
             }
-            
+
             //patterns and practices
             if (lowerInvariant == "31bf3856ad364e35")
             {
                 return true;
             }
-            
+
             return false;
         }
 
@@ -362,6 +364,8 @@ namespace NServiceBus.Hosting.Helpers
         internal bool IncludeExesInScan = true;
         internal bool ScanNestedDirectories = true;
 
+        static ILog Logger = LogManager.GetLogger<AssemblyScanner>();
+
         //TODO: delete when we make message scanning lazy #1617
         static string[] DefaultAssemblyExclusions =
                                 {
@@ -376,7 +380,7 @@ namespace NServiceBus.Hosting.Helpers
                                     "rhino.licensing.", "bouncycastle.crypto",
                                     "magnum.", "interop.", "nlog.", "newtonsoft.json.",
                                     "common.logging.", "topshelf.",
-                                    "Autofac.", "log4net.", "nhibernate.", 
+                                    "Autofac.", "log4net.", "nhibernate.",
                                     "castle.",
 
                                     // Raven
