@@ -38,14 +38,14 @@
             var wireEncryptedString = valueToEncrypt as WireEncryptedString;
             if (wireEncryptedString != null)
             {
-                encryptionService.Encrypt(wireEncryptedString, context);
+                encryptionService.EncryptValue(wireEncryptedString, context);
                 return;
             }
 
             var stringToEncrypt = valueToEncrypt as string;
             if (stringToEncrypt != null)
             {
-                encryptionService.Encrypt(ref stringToEncrypt, context);
+                encryptionService.EncryptValue(ref stringToEncrypt, context);
 
                 member.SetValue(message, stringToEncrypt);
                 return;

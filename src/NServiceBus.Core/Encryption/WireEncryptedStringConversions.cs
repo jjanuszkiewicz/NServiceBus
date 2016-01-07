@@ -11,13 +11,13 @@ namespace NServiceBus
             return instance is WireEncryptedString;
         }
 
-        public static void Encrypt(this IEncryptionService encryptionService, WireEncryptedString wireEncryptedString, IOutgoingLogicalMessageContext context)
+        public static void EncryptValue(this IEncryptionService encryptionService, WireEncryptedString wireEncryptedString, IOutgoingLogicalMessageContext context)
         {
             wireEncryptedString.EncryptedValue = encryptionService.Encrypt(wireEncryptedString.Value, context);
             wireEncryptedString.Value = null;
         }
 
-        public static void Decrypt(this IEncryptionService encryptionService, WireEncryptedString wireEncryptedString, IIncomingLogicalMessageContext context)
+        public static void DecryptValue(this IEncryptionService encryptionService, WireEncryptedString wireEncryptedString, IIncomingLogicalMessageContext context)
         {
             if (wireEncryptedString.EncryptedValue == null)
             {

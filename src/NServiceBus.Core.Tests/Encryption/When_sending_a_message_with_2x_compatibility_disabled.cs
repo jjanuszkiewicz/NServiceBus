@@ -16,7 +16,7 @@
 
             var value = (WireEncryptedString) MySecretMessage;
 
-            WireEncryptedStringConversions.Encrypt(svc, value, null);
+            WireEncryptedStringConversions.EncryptValue(svc, value, null);
             Assert.AreEqual(value.EncryptedValue.EncryptedBase64Value, EncryptedBase64Value);
         }
     }

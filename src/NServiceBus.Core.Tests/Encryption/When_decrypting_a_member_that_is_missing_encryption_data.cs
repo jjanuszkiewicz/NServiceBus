@@ -21,7 +21,7 @@
             };
 
             // ReSharper disable once InvokeAsExtensionMethod
-            var exception = Assert.Throws<Exception>(() => WireEncryptedStringConversions.Decrypt(svc, value, null));
+            var exception = Assert.Throws<Exception>(() => WireEncryptedStringConversions.DecryptValue(svc, value, null));
             Assert.AreEqual("Encrypted property is missing encryption data", exception.Message);
         }
     }

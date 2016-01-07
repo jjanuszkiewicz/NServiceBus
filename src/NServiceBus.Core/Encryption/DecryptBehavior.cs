@@ -38,13 +38,13 @@ namespace NServiceBus
             var wireEncryptedString = encryptedValue as WireEncryptedString;
             if (wireEncryptedString != null)
             {
-                encryptionService.Decrypt(wireEncryptedString, context);
+                encryptionService.DecryptValue(wireEncryptedString, context);
             }
 
             var stringToDecrypt = encryptedValue as string;
             if (stringToDecrypt != null)
             {
-                encryptionService.Decrypt(ref stringToDecrypt, context);
+                encryptionService.DecryptValue(ref stringToDecrypt, context);
                 property.SetValue(target, stringToDecrypt);
             }
         }
