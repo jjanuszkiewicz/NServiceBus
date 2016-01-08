@@ -213,12 +213,6 @@
         public void BaseSetUp()
         {
             conventions = BuildConventions();
-
-            var encryptedValue = new EncryptedValue
-            {
-                EncryptedBase64Value = EncryptedBase64Value,
-                Base64Iv = "init_vector"
-            };
             inspector = new EncryptionInspector(conventions);
         }
 

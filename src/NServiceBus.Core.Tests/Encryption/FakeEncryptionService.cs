@@ -1,7 +1,6 @@
 namespace NServiceBus.Core.Tests.Encryption
 {
     using System;
-    using global::NServiceBus.Encryption;
     using NServiceBus.Pipeline.Contexts;
     using NServiceBus.Pipeline.OutgoingPipeline;
 

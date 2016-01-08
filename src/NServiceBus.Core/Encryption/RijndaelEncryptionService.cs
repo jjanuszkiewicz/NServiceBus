@@ -31,7 +31,6 @@ namespace NServiceBus
     using System.Collections.Generic;
     using System.IO;
     using System.Security.Cryptography;
-    using System.Text;
     using NServiceBus.Pipeline.OutgoingPipeline;
     using Logging;
     using Pipeline.Contexts;

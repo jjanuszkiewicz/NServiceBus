@@ -187,9 +187,10 @@ namespace NServiceBus
     }
     public class static ConfigureRijndaelEncryptionService
     {
-        public static void RegisterEncryptionService(this NServiceBus.BusConfiguration config, System.Func<NServiceBus.ObjectBuilder.IBuilder, NServiceBus.Encryption.IEncryptionService> func) { }
+        public static void RegisterEncryptionService(this NServiceBus.BusConfiguration config, System.Func<NServiceBus.ObjectBuilder.IBuilder, NServiceBus.IEncryptionService> func) { }
         public static void RijndaelEncryptionService(this NServiceBus.BusConfiguration config) { }
-        public static void RijndaelEncryptionService(this NServiceBus.BusConfiguration config, string encryptionKey, System.Collections.Generic.List<string> expiredKeys = null) { }
+        public static void RijndaelEncryptionService(this NServiceBus.BusConfiguration config, string encryptionKeyIdentifier, byte[] encryptionKey, System.Collections.Generic.IList<byte[]> decryptionKeys = null) { }
+        public static void RijndaelEncryptionService(this NServiceBus.BusConfiguration config, string encryptionKeyIdentifier, System.Collections.Generic.IDictionary<string, byte[]> keys, System.Collections.Generic.IList<byte[]> decryptionKeys = null) { }
     }
     public class static ConfigureTransportConnectionString
     {
@@ -399,6 +400,7 @@ namespace NServiceBus
         public const string ReplyToAddress = "NServiceBus.ReplyToAddress";
         public const string Retries = "NServiceBus.Retries";
         public const string ReturnMessageErrorCodeHeader = "NServiceBus.ReturnMessage.ErrorCode";
+        public const string RijndaelKeyIdentifier = "NServiceBus.RijndaelKeyIdentifier";
         public const string RouteTo = "NServiceBus.Header.RouteTo";
         public const string SagaId = "NServiceBus.SagaId";
         public const string SagaType = "NServiceBus.SagaType";
@@ -553,6 +555,11 @@ namespace NServiceBus
     public interface IDispatchContext : NServiceBus.Extensibility.IExtendable, NServiceBus.Pipeline.IBehaviorContext
     {
         System.Collections.Generic.IEnumerable<NServiceBus.Transports.TransportOperation> Operations { get; }
+    }
+    public interface IEncryptionService
+    {
+        string Decrypt(NServiceBus.EncryptedValue encryptedValue, NServiceBus.Pipeline.Contexts.IIncomingLogicalMessageContext context);
+        NServiceBus.EncryptedValue Encrypt(string value, NServiceBus.Pipeline.OutgoingPipeline.IOutgoingLogicalMessageContext context);
     }
     public interface IEndpointInstance : NServiceBus.IBusSessionFactory
     {
@@ -1199,6 +1206,11 @@ namespace NServiceBus.Config
         "ures.Feature` and use `configuration.EnableFeature<YourClass>()`. Will be remove" +
         "d in version 7.0.0.", true)]
     public interface IWantToRunWhenConfigurationIsComplete { }
+    public enum KeyFormat
+    {
+        Ascii = 0,
+        Base64 = 1,
+    }
     public class Logging : System.Configuration.ConfigurationSection
     {
         public Logging() { }
@@ -1268,12 +1280,20 @@ namespace NServiceBus.Config
         public NServiceBus.Config.RijndaelExpiredKeyCollection ExpiredKeys { get; set; }
         [System.Configuration.ConfigurationPropertyAttribute("Key", IsRequired=true)]
         public string Key { get; set; }
+        [System.Configuration.ConfigurationPropertyAttribute("KeyFormat", IsRequired=false)]
+        public NServiceBus.Config.KeyFormat KeyFormat { get; set; }
+        [System.Configuration.ConfigurationPropertyAttribute("KeyIdentifier", IsRequired=false)]
+        public string KeyIdentifier { get; set; }
     }
-    public class RijndaelExpiredKey : System.Configuration.ConfigurationElement, System.IComparable<NServiceBus.Config.RijndaelExpiredKey>
+    public class RijndaelExpiredKey : System.Configuration.ConfigurationElement
     {
         public RijndaelExpiredKey() { }
         [System.Configuration.ConfigurationPropertyAttribute("Key", IsRequired=true)]
         public string Key { get; set; }
+        [System.Configuration.ConfigurationPropertyAttribute("KeyFormat", IsRequired=false)]
+        public NServiceBus.Config.KeyFormat KeyFormat { get; set; }
+        [System.Configuration.ConfigurationPropertyAttribute("KeyIdentifier", IsRequired=false)]
+        public string KeyIdentifier { get; set; }
     }
     public class RijndaelExpiredKeyCollection : System.Configuration.ConfigurationElementCollection
     {
@@ -1434,14 +1454,6 @@ namespace NServiceBus.DeliveryConstraints
             where T : NServiceBus.DeliveryConstraints.DeliveryConstraint { }
         public static bool TryGetDeliveryConstraint<T>(this NServiceBus.Pipeline.OutgoingPipeline.IOutgoingLogicalMessageContext context, out T constraint)
             where T : NServiceBus.DeliveryConstraints.DeliveryConstraint { }
-    }
-}
-namespace NServiceBus.Encryption
-{
-    public interface IEncryptionService
-    {
-        string Decrypt(NServiceBus.EncryptedValue encryptedValue);
-        NServiceBus.EncryptedValue Encrypt(string value);
     }
 }
 namespace NServiceBus.Extensibility
