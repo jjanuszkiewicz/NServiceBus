@@ -1,5 +1,6 @@
 namespace NServiceBus
 {
+    using System;
     using System.Transactions;
     using NServiceBus.Outbox;
     using NServiceBus.Persistence;
@@ -22,7 +23,7 @@ namespace NServiceBus
         public bool TryAdapt(TransportTransaction transportTransaction, out CompletableSynchronizedStorageSession session)
         {
             Transaction ambientTransaction;
-            
+
             if (transportTransaction.TryGet(out ambientTransaction))
             {
                 var transaction = new InMemoryTransaction();
@@ -34,10 +35,8 @@ namespace NServiceBus
             return false;
         }
 
-        private class EnlistmentNotification : IEnlistmentNotification
+        class EnlistmentNotification : IEnlistmentNotification
         {
-            InMemoryTransaction transaction;
-
             public EnlistmentNotification(InMemoryTransaction transaction)
             {
                 this.transaction = transaction;
@@ -45,8 +44,15 @@ namespace NServiceBus
 
             public void Prepare(PreparingEnlistment preparingEnlistment)
             {
-                transaction.Commit();
-                preparingEnlistment.Prepared();
+                try
+                {
+                    transaction.Commit();
+                    preparingEnlistment.Prepared();
+                }
+                catch (Exception ex)
+                {
+                    preparingEnlistment.ForceRollback(ex);
+                }
             }
 
             public void Commit(Enlistment enlistment)
@@ -56,6 +62,7 @@ namespace NServiceBus
 
             public void Rollback(Enlistment enlistment)
             {
+                transaction.Rollback();
                 enlistment.Done();
             }
 
@@ -63,6 +70,8 @@ namespace NServiceBus
             {
                 enlistment.Done();
             }
+
+            InMemoryTransaction transaction;
         }
     }
 }

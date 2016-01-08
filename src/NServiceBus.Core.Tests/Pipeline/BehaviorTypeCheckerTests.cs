@@ -6,7 +6,6 @@
     using NServiceBus.OutgoingPipeline;
     using NServiceBus.Pipeline;
     using NServiceBus.Pipeline.Contexts;
-    using NServiceBus.Unicast.Transport;
     using NUnit.Framework;
 
     [TestFixture]
@@ -116,21 +115,7 @@
 
         class BehaviorUsingContextImplementationOnTTo : IBehavior<IAuditContext, RootContext>
         {
-            public Task Invoke(IAuditContext context, Func<RootContext, Task> next)
-            {
-                return Task.FromResult(0);
-            }
-
-            public void Initialize(PipelineInfo pipelineInfo)
-            {
-            }
-
-            public Task Warmup()
-            {
-                return Task.FromResult(0);
-            }
-
-            public Task Cooldown()
+            public Task Invoke(IAuditContext context, Func<RootContext, Task> stage)
             {
                 return Task.FromResult(0);
             }

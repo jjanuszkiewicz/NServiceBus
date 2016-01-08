@@ -26,7 +26,6 @@
                 s.SetDefault<EndpointInstances>(new EndpointInstances());
                 s.SetDefault<Publishers>(new Publishers());
                 s.SetDefault<DistributionPolicy>(new DistributionPolicy());
-                s.SetDefault<TransportAddresses>(new TransportAddresses());
             });
         }
 
@@ -41,11 +40,7 @@
             context.Container.ConfigureComponent(b => context.Settings.Get<DistributionPolicy>(), DependencyLifecycle.SingleInstance);
             context.Container.ConfigureComponent<UnicastRouter>(DependencyLifecycle.SingleInstance);
             context.Container.ConfigureComponent(b => new UnicastSendRouterConnector(LocalAddress(b), b.Build<UnicastRouter>(), b.Build<DistributionPolicy>()), DependencyLifecycle.InstancePerCall);
-
-            var transportAddresses = context.Settings.Get<TransportAddresses>();
-            transportAddresses.RegisterTransportDefault(x => transportDefinition.ToTransportAddress(new LogicalAddress(x)));
-            context.Container.ConfigureComponent(b => transportAddresses, DependencyLifecycle.SingleInstance);
-
+            
             var unicastBusConfig = context.Settings.GetConfigSection<UnicastBusConfig>();
             if (unicastBusConfig != null)
             {
@@ -60,7 +55,7 @@
 
                 foreach (MessageEndpointMapping m in legacyRoutingConfig)
                 {
-                    m.Configure(routeTable.RouteToAddress);
+                    m.Configure((type, s) => routeTable.RouteToAddress(type, transportDefinition.MakeCanonicalForm(s)));
                     m.Configure((type, s) =>
                     {
                         var typesEnclosed = knownMessageTypes.Where(t => t.IsAssignableFrom(type));
@@ -188,9 +183,9 @@
                     }
                 }
 
-                public IEnumerable<UnicastRoutingTarget> Resolve(Func<Endpoint, IEnumerable<EndpointInstance>> instanceResolver)
+                public Task<IEnumerable<UnicastRoutingTarget>> Resolve(Func<EndpointName, Task<IEnumerable<EndpointInstance>>> instanceResolver)
                 {
-                    yield return target;
+                    return Task.FromResult(EnumerableEx.Single(target));
                 }
             }
         }

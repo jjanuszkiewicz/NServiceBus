@@ -2,6 +2,7 @@
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using NServiceBus.Extensibility;
     using NServiceBus.Routing;
     using NServiceBus.Transports;
@@ -21,7 +22,7 @@
         [Test]
         public void Should_route_a_command_to_a_single_non_scaled_out_destination()
         {
-            var sales = new Endpoint("Sales");
+            var sales = new EndpointName("Sales");
             metadataRegistry.RegisterMessageType(typeof(Command));
             routingTable.RouteToEndpoint(typeof(Command), sales);
             endpointInstances.AddStatic(sales, new EndpointInstance(sales, null, null));
@@ -38,7 +39,7 @@
         [Test]
         public void Should_route_an_event_to_a_single_non_scaled_out_destination()
         {
-            var sales = new Endpoint("Sales");
+            var sales = new EndpointName("Sales");
             metadataRegistry.RegisterMessageType(typeof(Event));
             routingTable.RouteToEndpoint(typeof(Event), sales);
             endpointInstances.AddStatic(sales, new EndpointInstance(sales));
@@ -53,15 +54,15 @@
         [Test]
         public void Should_route_an_event_to_a_single_instance_of_each_endpoint()
         {
-            var sales = new Endpoint("Sales");
-            var shipping = new Endpoint("Shipping");
+            var sales = new EndpointName("Sales");
+            var shipping = new EndpointName("Shipping");
             metadataRegistry.RegisterMessageType(typeof(Event));
             routingTable.RouteToEndpoint(typeof(Event), sales);
             routingTable.RouteToEndpoint(typeof(Event), shipping);
 
             endpointInstances.AddStatic(sales, new EndpointInstance(sales, "1"));
-            endpointInstances.AddDynamic(e => new[] { new EndpointInstance(sales, "2")});
-            endpointInstances.AddStatic(shipping, new EndpointInstance(shipping, "1"), new EndpointInstance(shipping, "2"));
+            endpointInstances.AddDynamic(e => Task.FromResult(EnumerableEx.Single(new EndpointInstance(sales, "2"))));
+            endpointInstances.AddStatic(shipping, new EndpointInstance(shipping, "1", null), new EndpointInstance(shipping, "2"));
 
             transportAddresses.AddRule(i => i.ToString());
 
@@ -70,6 +71,55 @@
             Assert.AreEqual(2, routes.Length);
             Assert.AreEqual("Sales-1", ExtractDestination(routes[0]));
             Assert.AreEqual("Shipping-1", ExtractDestination(routes[1]));
+        }
+
+        [Test]
+        public void Should_not_send_multiple_copies_of_message_to_one_physical_destination()
+        {
+            var sales = new EndpointName("Sales");
+            metadataRegistry.RegisterMessageType(typeof(Event));
+
+            routingTable.RouteToEndpoint(typeof(Event), sales);
+            routingTable.RouteToAddress(typeof(Event), "Sales-1");
+            endpointInstances.AddStatic(sales, new EndpointInstance(sales, "1"));
+            transportAddresses.AddRule(i => i.ToString());
+
+            var routes = router.Route(typeof(Event), new SingleInstanceRoundRobinDistributionStrategy(), new ContextBag()).Result.ToArray();
+
+            Assert.AreEqual(1, routes.Length);
+        }
+
+        [Test]
+        public void Should_not_pass_duplicate_routes_to_distribution_strategy()
+        {
+            var sales = new EndpointName("Sales");
+            metadataRegistry.RegisterMessageType(typeof(Event));
+
+            routingTable.RouteToEndpoint(typeof(Event), sales);
+            endpointInstances.AddStatic(sales, new EndpointInstance(sales, "1"));
+            endpointInstances.AddDynamic(name =>
+            {
+                IEnumerable<EndpointInstance> results = new[]
+                {
+                    new EndpointInstance(sales, "1")
+                };
+                return Task.FromResult(results);
+            });
+            transportAddresses.AddRule(i => i.ToString());
+
+            var routes = router.Route(typeof(Event), new TestDistributionStrategy(), new ContextBag()).Result.ToArray();
+
+            Assert.AreEqual(1, routes.Length);
+        }
+
+        class TestDistributionStrategy : DistributionStrategy
+        {
+            public override IEnumerable<UnicastRoutingTarget> SelectDestination(IEnumerable<UnicastRoutingTarget> allInstances)
+            {
+                var instances = allInstances.ToList();
+                Assert.AreEqual(1, instances.Count);
+                return instances;
+            }
         }
 
         static string ExtractDestination(UnicastRoutingStrategy route)
@@ -86,7 +136,7 @@
             metadataRegistry = new MessageMetadataRegistry(new Conventions());
             routingTable = new UnicastRoutingTable();
             endpointInstances = new EndpointInstances();
-            transportAddresses = new TransportAddresses();
+            transportAddresses = new TransportAddresses(address => null);
             router = new UnicastRouter(
                 metadataRegistry,
                 routingTable,

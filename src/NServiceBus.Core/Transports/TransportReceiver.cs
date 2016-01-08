@@ -3,7 +3,6 @@ namespace NServiceBus
     using System;
     using System.Threading.Tasks;
     using Logging;
-    using Unicast.Transport;
     using ObjectBuilder;
     using Pipeline.Contexts;
     using Transports;
@@ -15,11 +14,13 @@ namespace NServiceBus
             IBuilder builder, 
             IPushMessages receiver, 
             PushSettings pushSettings, 
-            PipelineBase<ITransportReceiveContext> pipeline, 
+            IPipeline<ITransportReceiveContext> pipeline, 
+            IPipelineCache pipelineCache,
             PushRuntimeSettings pushRuntimeSettings)
         {
             Id = id;
             this.pipeline = pipeline;
+            this.pipelineCache = pipelineCache;
             this.pushRuntimeSettings = pushRuntimeSettings;
             this.pushSettings = pushSettings;
             this.receiver = receiver;
@@ -38,8 +39,6 @@ namespace NServiceBus
             Logger.DebugFormat("Pipeline {0} is starting receiver for queue {1}.", Id, pushSettings.InputQueue);
 
             await receiver.Init(InvokePipeline, builder.Build<CriticalError>(), pushSettings).ConfigureAwait(false);
-            pipeline.Initialize(new PipelineInfo(Id, pushSettings.InputQueue));
-            await pipeline.Warmup().ConfigureAwait(false);
 
             receiver.Start(pushRuntimeSettings);
 
@@ -54,7 +53,6 @@ namespace NServiceBus
             }
 
             await receiver.Stop().ConfigureAwait(false);
-            await pipeline.Cooldown().ConfigureAwait(false);
 
             isStarted = false;
         }
@@ -63,7 +61,7 @@ namespace NServiceBus
         {
             using (var childBuilder = builder.CreateChildBuilder())
             {
-                var context = new TransportReceiveContext(new IncomingMessage(pushContext.MessageId, pushContext.Headers, pushContext.BodyStream), pushContext.TransportTransaction, new RootContext(childBuilder));
+                var context = new TransportReceiveContext(new IncomingMessage(pushContext.MessageId, pushContext.Headers, pushContext.BodyStream), pushContext.TransportTransaction, new RootContext(childBuilder, pipelineCache));
                 context.Extensions.Merge(pushContext.Context);
                 await pipeline.Invoke(context).ConfigureAwait(false);
             }
@@ -72,11 +70,12 @@ namespace NServiceBus
         static ILog Logger = LogManager.GetLogger<TransportReceiver>();
 
         IBuilder builder;
-        PipelineBase<ITransportReceiveContext> pipeline;
+        IPipeline<ITransportReceiveContext> pipeline;
         PushRuntimeSettings pushRuntimeSettings;
         IPushMessages receiver;
 
         bool isStarted;
         PushSettings pushSettings;
+        IPipelineCache pipelineCache;
     }
 }

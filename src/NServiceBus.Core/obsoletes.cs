@@ -35,6 +35,18 @@ namespace NServiceBus
     using System.Collections.Generic;
     using System.Reflection;
 
+
+    public static partial class ConfigureCriticalErrorAction
+    {
+        [ObsoleteEx(
+            RemoveInVersion = "7",
+            TreatAsErrorFromVersion = "6",
+            ReplacementTypeOrMember = "ConfigureCriticalErrorAction.DefineCriticalErrorAction(BusConfiguration, Func<ICriticalErrorContext, Task>)")]
+        public static void DefineCriticalErrorAction(this BusConfiguration busConfiguration, Action<string, Exception> onCriticalError)
+        {
+        }
+    }
+
     [ObsoleteEx(
         Message = "Please use `IMessageHandlerContext` provided to message handlers instead.",
         RemoveInVersion = "7.0",
@@ -164,7 +176,7 @@ namespace NServiceBus
         }
 
         [ObsoleteEx(
-            ReplacementTypeOrMember = "UseCustomLogicalToTransportAddressTranslation",
+            ReplacementTypeOrMember = "UseTransport<T>().AddAddressTranslationRule",
             RemoveInVersion = "7.0",
             TreatAsErrorFromVersion = "6.0")]
         public void OverrideLocalAddress(string queue)
@@ -1300,7 +1312,7 @@ namespace NServiceBus
     [ObsoleteEx(
         TreatAsErrorFromVersion = "6",
         RemoveInVersion = "7",
-        Message = "When in context of handler use IMessageHandlingContext. Otherwise use IBusSessionFactory to create sending context.")]
+        Message = "IHandleMessages<T> now exposes the IMessageHandlerContext parameter. You can use this to access what used to be available in the IBus interface.  If you're trying to send messages outside IHandleMessages<T> use either the provided IBusSession or create one with the IBusSessionFactory.")]
     public interface IBus
     {
     }

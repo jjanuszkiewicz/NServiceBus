@@ -13,7 +13,7 @@
 
     class MessageDrivenUnsubscribeTerminator : PipelineTerminator<IUnsubscribeContext>
     {
-        public MessageDrivenUnsubscribeTerminator(SubscriptionRouter subscriptionRouter, string replyToAddress, Endpoint endpoint, IDispatchMessages dispatcher, bool legacyMode)
+        public MessageDrivenUnsubscribeTerminator(SubscriptionRouter subscriptionRouter, string replyToAddress, EndpointName endpoint, IDispatchMessages dispatcher, bool legacyMode)
         {
             this.subscriptionRouter = subscriptionRouter;
             this.replyToAddress = replyToAddress;
@@ -22,11 +22,11 @@
             this.legacyMode = legacyMode;
         }
 
-        protected override Task Terminate(IUnsubscribeContext context)
+        protected override async Task Terminate(IUnsubscribeContext context)
         {
             var eventType = context.EventType;
 
-            var publisherAddresses = subscriptionRouter.GetAddressesForEventType(eventType)
+            var publisherAddresses = (await subscriptionRouter.GetAddressesForEventType(eventType).ConfigureAwait(false))
                 .EnsureNonEmpty(() => $"No publisher address could be found for message type {eventType}. Please ensure the configured publisher endpoint has at least one known instance.");
 
             var unsubscribeTasks = new List<Task>();
@@ -49,8 +49,7 @@
 
                 unsubscribeTasks.Add(SendUnsubscribeMessageWithRetries(publisherAddress, unsubscribeMessage, eventType.AssemblyQualifiedName, context.Extensions));
             }
-
-            return Task.WhenAll(unsubscribeTasks.ToArray());
+            await Task.WhenAll(unsubscribeTasks.ToArray()).ConfigureAwait(false);
         }
 
         async Task SendUnsubscribeMessageWithRetries(string destination, OutgoingMessage unsubscribeMessage, string messageType, ContextBag context, int retriesCount = 0)
@@ -58,9 +57,8 @@
             var state = context.GetOrCreate<Settings>();
             try
             {
-
-                var dispatchOptions = new DispatchOptions(new UnicastAddressTag(destination), DispatchConsistency.Default);
-                await dispatcher.Dispatch(new[] { new TransportOperation(unsubscribeMessage, dispatchOptions) }, context).ConfigureAwait(false);
+                var transportOperation = new TransportOperation(unsubscribeMessage, new UnicastAddressTag(destination), DispatchConsistency.Default);
+                await dispatcher.Dispatch(new TransportOperations(transportOperation), context).ConfigureAwait(false);
             }
             catch (QueueNotFoundException ex)
             {
@@ -92,7 +90,7 @@
 
         SubscriptionRouter subscriptionRouter;
         string replyToAddress;
-        readonly Endpoint endpoint;
+        readonly EndpointName endpoint;
         IDispatchMessages dispatcher;
         readonly bool legacyMode;
 

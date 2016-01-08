@@ -9,9 +9,10 @@
     using DeliveryConstraints;
     using NServiceBus.Outbox;
     using NServiceBus.Performance.TimeToBeReceived;
+    using NServiceBus.Pipeline;
     using NServiceBus.Pipeline.Contexts;
     using NServiceBus.Routing;
-    using Transports;
+    using NServiceBus.Transports;
     using NUnit.Framework;
     using TransportOperation = NServiceBus.Outbox.TransportOperation;
 
@@ -38,25 +39,25 @@
                 new TransportOperation("x",options,new byte[0],new Dictionary<string, string>())
             });
 
-            var context = CreateContext();
+            var context = CreateContext(fakeBatchPipeline);
 
             await Invoke(context);
 
-            Assert.True(fakeBatchPipeline.TransportOperations.First().DispatchOptions.DeliveryConstraints.Any(c => c is NonDurableDelivery));
+            Assert.True(fakeBatchPipeline.TransportOperations.First().DeliveryConstraints.Any(c => c is NonDurableDelivery));
 
             DelayDeliveryWith delayDeliveryWith;
 
-            Assert.True(fakeBatchPipeline.TransportOperations.First().DispatchOptions.DeliveryConstraints.TryGet(out delayDeliveryWith));
+            Assert.True(fakeBatchPipeline.TransportOperations.First().DeliveryConstraints.TryGet(out delayDeliveryWith));
             Assert.AreEqual(TimeSpan.FromSeconds(10), delayDeliveryWith.Delay);
 
             DoNotDeliverBefore doNotDeliverBefore;
 
-            Assert.True(fakeBatchPipeline.TransportOperations.First().DispatchOptions.DeliveryConstraints.TryGet(out doNotDeliverBefore));
+            Assert.True(fakeBatchPipeline.TransportOperations.First().DeliveryConstraints.TryGet(out doNotDeliverBefore));
             Assert.AreEqual(deliverTime.ToString(), doNotDeliverBefore.At.ToString());
 
             DiscardIfNotReceivedBefore discard;
 
-            Assert.True(fakeBatchPipeline.TransportOperations.First().DispatchOptions.DeliveryConstraints.TryGet(out discard));
+            Assert.True(fakeBatchPipeline.TransportOperations.First().DeliveryConstraints.TryGet(out discard));
             Assert.AreEqual(maxTime, discard.MaxTime);
 
             Assert.Null(fakeOutbox.StoredMessage);
@@ -74,11 +75,11 @@
                 new TransportOperation("x",options,new byte[0],new Dictionary<string, string>())
             });
 
-            var context = CreateContext();
+            var context = CreateContext(fakeBatchPipeline);
 
             await Invoke(context);
 
-            var routing = fakeBatchPipeline.TransportOperations.First().DispatchOptions.AddressTag as UnicastAddressTag;
+            var routing = fakeBatchPipeline.TransportOperations.First().AddressTag as UnicastAddressTag;
             Assert.NotNull(routing);
             Assert.AreEqual("myEndpoint", routing.Destination);
             Assert.Null(fakeOutbox.StoredMessage);
@@ -97,19 +98,19 @@
                 new TransportOperation("x",options,new byte[0],new Dictionary<string, string>())
             });
 
-            var context = CreateContext();
+            var context = CreateContext(fakeBatchPipeline);
 
             await Invoke(context);
 
-            var routing = fakeBatchPipeline.TransportOperations.First().DispatchOptions.AddressTag as MulticastAddressTag;
+            var routing = fakeBatchPipeline.TransportOperations.First().AddressTag as MulticastAddressTag;
             Assert.NotNull(routing);
             Assert.AreEqual(typeof(MyEvent), routing.MessageType);
             Assert.Null(fakeOutbox.StoredMessage);
         }
 
-        static ITransportReceiveContext CreateContext()
+        static ITransportReceiveContext CreateContext(FakeBatchPipeline pipeline)
         {
-            var context = new TransportReceiveContext(new IncomingMessage("id", new Dictionary<string, string>(), new MemoryStream()), null, new RootContext(null));
+            var context = new TransportReceiveContext(new IncomingMessage("id", new Dictionary<string, string>(), new MemoryStream()), null, new RootContext(null, new FakePipelineCache(pipeline)));
             return context;
         }
 
@@ -119,7 +120,7 @@
             fakeOutbox = new FakeOutboxStorage();
             fakeBatchPipeline = new FakeBatchPipeline();
 
-            behavior = new TransportReceiveToPhysicalMessageProcessingConnector(fakeBatchPipeline, fakeOutbox);
+            behavior = new TransportReceiveToPhysicalMessageProcessingConnector(fakeOutbox);
         }
 
         async Task Invoke(ITransportReceiveContext context)
@@ -132,9 +133,27 @@
         TransportReceiveToPhysicalMessageProcessingConnector behavior;
 
         class MyEvent { }
-        class FakeBatchPipeline : IPipelineBase<IBatchDispatchContext>
+
+        class FakePipelineCache : IPipelineCache
         {
-            public IEnumerable<Transports.TransportOperation> TransportOperations { get; set; }
+            IPipeline<IBatchDispatchContext> pipeline;
+
+            public FakePipelineCache(IPipeline<IBatchDispatchContext> pipeline)
+            {
+                this.pipeline = pipeline;
+            }
+
+            public IPipeline<TContext> Pipeline<TContext>()
+                where TContext : IBehaviorContext
+
+            {
+                return (IPipeline<TContext>)pipeline;
+            }
+        }
+
+        class FakeBatchPipeline : IPipeline<IBatchDispatchContext>
+        {
+            public IEnumerable<NServiceBus.Transports.TransportOperation> TransportOperations { get; set; }
 
             public Task Invoke(IBatchDispatchContext context)
             {

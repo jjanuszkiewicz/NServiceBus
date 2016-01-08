@@ -16,7 +16,10 @@ namespace NServiceBus
         MessageMetadataRegistry messageMetadataRegistry;
         UnicastRoutingTable unicastRoutingTable;
 
-        public UnicastRouter(MessageMetadataRegistry messageMetadataRegistry, UnicastRoutingTable unicastRoutingTable, EndpointInstances endpointInstances, TransportAddresses physicalAddresses)
+        public UnicastRouter(MessageMetadataRegistry messageMetadataRegistry, 
+            UnicastRoutingTable unicastRoutingTable, 
+            EndpointInstances endpointInstances, 
+            TransportAddresses physicalAddresses)
         {
             this.messageMetadataRegistry = messageMetadataRegistry;
             this.unicastRoutingTable = unicastRoutingTable;
@@ -32,18 +35,29 @@ namespace NServiceBus
                 .ToList();
             
             var routes = await unicastRoutingTable.GetDestinationsFor(typesToRoute, contextBag).ConfigureAwait(false);
+            var destinations = new List<UnicastRoutingTarget>();
+            foreach (var route in routes)
+            {
+                destinations.AddRange(await route.Resolve(InstanceResolver).ConfigureAwait(false));
+            }
 
-            var destinations = routes.SelectMany(d => d.Resolve(e => endpointInstances.FindInstances(e))).Distinct();
-
-            var destinationsByEndpoint = destinations.GroupBy(d => d.Endpoint, d => d);
+            var destinationsByEndpoint = destinations
+                .GroupBy(d => d.Endpoint, d => d);
 
             var selectedDestinations = SelectDestinationsForEachEndpoint(distributionStrategy, destinationsByEndpoint);
 
             return selectedDestinations
-                .Select(destination => new UnicastRoutingStrategy(destination.Resolve(physicalAddresses.GetTransportAddress)));
+                .Select(destination => destination.Resolve(x => physicalAddresses.GetTransportAddress(new LogicalAddress(x))))
+                .Distinct() //Make sure we are sending only one to each transport destination. Might happen when there are multiple routing information sources.
+                .Select(destination => new UnicastRoutingStrategy(destination));
         }
 
-        static IEnumerable<UnicastRoutingTarget> SelectDestinationsForEachEndpoint(DistributionStrategy distributionStrategy, IEnumerable<IGrouping<Endpoint, UnicastRoutingTarget>> destinationsByEndpoint)
+        Task<IEnumerable<EndpointInstance>> InstanceResolver(EndpointName endpoint)
+        {
+            return endpointInstances.FindInstances(endpoint);
+        }
+
+        static IEnumerable<UnicastRoutingTarget> SelectDestinationsForEachEndpoint(DistributionStrategy distributionStrategy, IEnumerable<IGrouping<EndpointName, UnicastRoutingTarget>> destinationsByEndpoint)
         {
             foreach (var group in destinationsByEndpoint)
             {

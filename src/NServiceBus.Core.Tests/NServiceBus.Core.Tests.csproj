@@ -117,6 +117,7 @@
     <Compile Include="Msmq\MsmqHelpers.cs" />
     <Compile Include="Msmq\MsmqAddressTests.cs" />
     <Compile Include="Msmq\MsmqSubscriptionStorageQueueTests.cs" />
+    <Compile Include="Persistence\InMemory\When_persisting_a_saga_with_InMemory_and_an_escalated_DTC_transaction.cs" />
     <Compile Include="Pipeline\Incoming\InvokeHandlerTerminatorTest.cs" />
     <Compile Include="Pipeline\Outgoing\OutgoingPublishContextTests.cs" />
     <Compile Include="Pipeline\Outgoing\OutgoingReplyContextTests.cs" />
@@ -256,6 +257,7 @@
     <Compile Include="Timeout\InMemoryTimeoutPersisterTests.cs" />
     <Compile Include="Timeout\When_fetching_timeouts_from_storage.cs" />
     <Compile Include="Timeout\InMemoryTimeoutPersisterThreadTests.cs" />
+    <Compile Include="Transports\TransportOperationsTests.cs" />
     <Compile Include="Unicast\ConfigurationSettings.cs" />
     <Compile Include="Unicast\ConfiguringMessageEndpointMapping.cs" />
     <Compile Include="Unicast\Config\ConfigurationSettings.cs" />

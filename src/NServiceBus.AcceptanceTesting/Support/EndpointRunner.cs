@@ -7,7 +7,6 @@
     using System.Threading.Tasks;
     using NServiceBus.Configuration.AdvanceExtensibility;
     using NServiceBus.Logging;
-    using NServiceBus.Routing;
     using NServiceBus.Support;
     using NServiceBus.Transports;
 
@@ -30,9 +29,9 @@
             {
                 behavior = endpointBehavior;
                 scenarioContext = run.ScenarioContext;
-                configuration =
-                    ((IEndpointConfigurationFactory)Activator.CreateInstance(endpointBehavior.EndpointBuilderType))
-                        .Get();
+                var endpointConfigurationFactory = (IEndpointConfigurationFactory)Activator.CreateInstance(endpointBehavior.EndpointBuilderType);
+                endpointConfigurationFactory.ScenarioContext = run.ScenarioContext;
+                configuration = endpointConfigurationFactory.Get();
                 configuration.EndpointName = endpointName;
 
                 if (!string.IsNullOrEmpty(configuration.CustomMachineName))
@@ -44,7 +43,7 @@
                 busConfiguration = await configuration.GetConfiguration(run, routingTable).ConfigureAwait(false);
                 RegisterInheritanceHierarchyOfContextInSettings(scenarioContext);
 
-                endpointBehavior.CustomConfig.ForEach(customAction => customAction(busConfiguration));
+                endpointBehavior.CustomConfig.ForEach(customAction => customAction(busConfiguration, scenarioContext));
 
                 if (configuration.SendOnly)
                 {

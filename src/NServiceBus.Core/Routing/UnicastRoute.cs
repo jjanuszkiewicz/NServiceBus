@@ -2,13 +2,15 @@ namespace NServiceBus.Routing
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// A destination of address routing.
     /// </summary>
     public class UnicastRoute : IUnicastRoute
     {
-        Endpoint endpoint;
+        EndpointName endpoint;
         EndpointInstance instance;
         string physicalAddress;
 
@@ -16,7 +18,7 @@ namespace NServiceBus.Routing
         /// Creates a destination based on the name of the endpoint.
         /// </summary>
         /// <param name="endpoint">Destination endpoint.</param>
-        public UnicastRoute(Endpoint endpoint)
+        public UnicastRoute(EndpointName endpoint)
         {
             Guard.AgainstNull(nameof(endpoint), endpoint);
             this.endpoint = endpoint;
@@ -42,24 +44,18 @@ namespace NServiceBus.Routing
             this.physicalAddress = physicalAddress;
         }
 
-        IEnumerable<UnicastRoutingTarget> IUnicastRoute.Resolve(Func<Endpoint, IEnumerable<EndpointInstance>> instanceResolver)
+        async Task<IEnumerable<UnicastRoutingTarget>> IUnicastRoute.Resolve(Func<EndpointName, Task<IEnumerable<EndpointInstance>>> instanceResolver)
         {
             if (physicalAddress != null)
             {
-                yield return UnicastRoutingTarget.ToTransportAddress(physicalAddress);
+                return EnumerableEx.Single(UnicastRoutingTarget.ToTransportAddress(physicalAddress));
             }
-            else if (instance != null)
+            if (instance != null)
             {
-                yield return UnicastRoutingTarget.ToEndpointInstance(instance);
+                return EnumerableEx.Single(UnicastRoutingTarget.ToEndpointInstance(instance));
             }
-            else
-            {
-                var instances = instanceResolver(endpoint);
-                foreach (var i in instances)
-                {
-                    yield return UnicastRoutingTarget.ToEndpointInstance(i);
-                }
-            }
+            var instances = await instanceResolver(endpoint).ConfigureAwait(false);
+            return instances.Select(UnicastRoutingTarget.ToEndpointInstance);
         }
     }
 }
