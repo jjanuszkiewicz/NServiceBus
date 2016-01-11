@@ -22,8 +22,7 @@ namespace NServiceBus.Features
             var transportDefinition = context.Settings.Get<TransportDefinition>();
             if (transportDefinition.Support.OutboundRoutingPolicy.Publishes != OutboundRoutingType.Unicast)
             {
-                var message = $"The transport {transportDefinition.GetType().Name} supports native publish-subscribe so subscriptions are not managed by the transport in the publishing endpoint.";
-                throw new Exception(message);
+                return;
             }
 
             context.Pipeline.Register<SubscriptionReceiverBehavior.Registration>();
