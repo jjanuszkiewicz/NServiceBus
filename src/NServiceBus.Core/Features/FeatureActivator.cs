@@ -39,6 +39,8 @@ namespace NServiceBus.Features
 
         public FeaturesReport SetupFeatures(IConfigureComponents container, PipelineSettings pipelineSettings)
         {
+            settings.Get<TransportDefinition>().InitializeTransportSupport(settings);
+
             // featuresToActivate is enumerated twice because after setting defaults some new features might got activated.
             var sourceFeatures = Sort(features);
 
@@ -60,8 +62,6 @@ namespace NServiceBus.Features
                 ActivateFeature(feature, enabledFeatures, container, pipelineSettings);
             }
 
-            settings.Get<TransportDefinition>().InitializeTransportSupport(settings);
-            
             settings.PreventChanges();
 
             return new FeaturesReport(features.Select(t => t.Diagnostics).ToList());
