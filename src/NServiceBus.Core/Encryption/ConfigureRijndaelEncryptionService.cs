@@ -96,8 +96,8 @@ namespace NServiceBus
         /// </summary>
         public static void RijndaelEncryptionService(this BusConfiguration config, string encryptionKeyIdentifier, byte[] encryptionKey, IList<byte[]> decryptionKeys = null)
         {
-            Guard.AgainstNull("config", config);
-            Guard.AgainstNullAndEmpty("encryptionKey", encryptionKey);
+            Guard.AgainstNull(nameof(config), config);
+            Guard.AgainstNullAndEmpty(nameof(encryptionKey), encryptionKey);
 
             decryptionKeys = decryptionKeys ?? new List<byte[]>();
 
@@ -112,8 +112,8 @@ namespace NServiceBus
         /// </summary>
         public static void RijndaelEncryptionService(this BusConfiguration config, string encryptionKeyIdentifier, IDictionary<string, byte[]> keys, IList<byte[]> decryptionKeys = null)
         {
-            if (null == encryptionKeyIdentifier) throw new ArgumentNullException("encryptionKeyIdentifier");
-            if (null == keys) throw new ArgumentNullException("keys");
+            Guard.AgainstNull(nameof(encryptionKeyIdentifier), encryptionKeyIdentifier);
+            Guard.AgainstNull(nameof(keys), keys);
 
             decryptionKeys = decryptionKeys ?? new List<byte[]>();
 
