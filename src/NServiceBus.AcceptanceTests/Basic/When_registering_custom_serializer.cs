@@ -7,8 +7,9 @@
     using System.Threading.Tasks;
     using NServiceBus.AcceptanceTesting;
     using NServiceBus.AcceptanceTests.EndpointTemplates;
-    using NServiceBus.Features;
+    using NServiceBus.MessageInterfaces;
     using NServiceBus.Serialization;
+    using NServiceBus.Settings;
     using NUnit.Framework;
 
     public class When_registering_custom_serializer : NServiceBusAcceptanceTest
@@ -50,7 +51,7 @@
         {
             public EndpointViaType()
             {
-                EndpointSetup<DefaultServer>(c => c.UseSerialization(typeof(MyCustomSerializer)));
+                EndpointSetup<DefaultServer>(c => c.UseSerialization<MySuperSerializer>());
             }
 
             public class MyRequestHandler : IHandleMessages<MyRequest>
@@ -69,7 +70,7 @@
         {
             public EndpointViaDefinition()
             {
-                EndpointSetup<DefaultServer>(c => c.UseSerialization(typeof(MySuperSerializer)));
+                EndpointSetup<DefaultServer>(c => c.UseSerialization<MySuperSerializer>());
             }
 
             public class MyRequestHandler : IHandleMessages<MyRequest>
@@ -91,25 +92,12 @@
 
         class MySuperSerializer : SerializationDefinition
         {
-            protected override Type ProvidedByFeature()
+            protected override Func<IMessageMapper, IMessageSerializer> Configure(ReadOnlySettings settings)
             {
-                return typeof(MySuperSerializerFeature);
+                return mapper => new MyCustomSerializer();
             }
         }
-
-        class MySuperSerializerFeature : ConfigureSerialization
-        {
-            public MySuperSerializerFeature()
-            {
-                EnableByDefault();
-            }
-
-            protected override Type GetSerializerType(FeatureConfigurationContext context)
-            {
-                return typeof(MyCustomSerializer);
-            }
-        }
-
+        
         class MyCustomSerializer : IMessageSerializer
         {
             public Context Context { get; set; }

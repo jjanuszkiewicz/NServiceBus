@@ -4,6 +4,7 @@ namespace NServiceBus.Serializers.Json.Tests
     using System.Threading.Tasks;
     using Features;
     using NServiceBus.ObjectBuilder;
+    using NServiceBus.Serialization;
     using NUnit.Framework;
 
     [TestFixture]
@@ -42,7 +43,7 @@ namespace NServiceBus.Serializers.Json.Tests
 
                 protected override Task OnStart(IBusSession session)
                 {
-                    var serializer = builder.Build<JsonMessageSerializer>();
+                    var serializer = (JsonMessageSerializer) builder.Build<IMessageSerializer>();
                     Assert.AreSame(Encoding.UTF8, serializer.Encoding);
                     return Task.FromResult(0);
                 }

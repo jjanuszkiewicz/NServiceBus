@@ -67,8 +67,8 @@ namespace NServiceBus
         public void EndpointName(string name) { }
         public void ExcludeAssemblies(params string[] assemblies) { }
         public void ExcludeTypes(params System.Type[] types) { }
-        [System.ObsoleteAttribute("Please use `UseTransport<T>().AddAddressTranslationRule` instead. Will be removed" +
-            " in version 7.0.0.", true)]
+        [System.ObsoleteAttribute("Please use `UseCustomLogicalToTransportAddressTranslation` instead. Will be remov" +
+            "ed in version 7.0.0.", true)]
         public void OverrideLocalAddress(string queue) { }
         public void OverridePublicReturnAddress(string address) { }
         [System.ObsoleteAttribute("Please use `OverridePublicReturnAddress(string address)` instead. Will be removed" +
@@ -425,7 +425,8 @@ namespace NServiceBus
     {
         System.Collections.Generic.IReadOnlyCollection<NServiceBus.Transports.TransportOperation> Operations { get; }
     }
-    [System.ObsoleteAttribute(@"IHandleMessages<T> now exposes the IMessageHandlerContext parameter. You can use this to access what used to be available in the IBus interface.  If you're trying to send messages outside IHandleMessages<T> use either the provided IBusSession or create one with the IBusSessionFactory. Will be removed in version 7.0.0.", true)]
+    [System.ObsoleteAttribute("When in context of handler use IMessageHandlingContext. Otherwise use IBusSession" +
+        "Factory to create sending context. Will be removed in version 7.0.0.", true)]
     public interface IBus { }
     public interface IBusContext : NServiceBus.Extensibility.IExtendable
     {
@@ -650,7 +651,7 @@ namespace NServiceBus
     public class JsonSerializer : NServiceBus.Serialization.SerializationDefinition
     {
         public JsonSerializer() { }
-        protected internal override System.Type ProvidedByFeature() { }
+        protected internal override System.Func<NServiceBus.MessageInterfaces.IMessageMapper, NServiceBus.Serialization.IMessageSerializer> Configure(NServiceBus.Settings.ReadOnlySettings settings) { }
     }
     public class static JsonSerializerConfigurationExtensions
     {
@@ -895,6 +896,11 @@ namespace NServiceBus
             where T : NServiceBus.Serialization.SerializationDefinition, new () { }
         public static NServiceBus.Serialization.SerializationExtentions<T> UseSerialization<T>(this NServiceBus.BusConfiguration config)
             where T : NServiceBus.Serialization.SerializationDefinition, new () { }
+        public static NServiceBus.Serialization.SerializationExtentions<T> UseSerialization<T>(this NServiceBus.BusConfiguration config, T serializationDefinition)
+            where T : NServiceBus.Serialization.SerializationDefinition { }
+        [System.ObsoleteAttribute("To use a custom serializer derive from SerializationDefinition and provide a fact" +
+            "ory method for creating the serializer instance. Will be removed in version 7.0." +
+            "0.", true)]
         public static void UseSerialization(this NServiceBus.BusConfiguration config, System.Type serializerType) { }
     }
     public class static SerializationContextExtensions
@@ -1049,7 +1055,7 @@ namespace NServiceBus
     public class XmlSerializer : NServiceBus.Serialization.SerializationDefinition
     {
         public XmlSerializer() { }
-        protected internal override System.Type ProvidedByFeature() { }
+        protected internal override System.Func<NServiceBus.MessageInterfaces.IMessageMapper, NServiceBus.Serialization.IMessageSerializer> Configure(NServiceBus.Settings.ReadOnlySettings settings) { }
     }
 }
 namespace NServiceBus.Audit
@@ -1538,10 +1544,6 @@ namespace NServiceBus.Features
     {
         protected internal override void Setup(NServiceBus.Features.FeatureConfigurationContext context) { }
     }
-    public class JsonSerialization : NServiceBus.Serialization.ConfigureSerialization
-    {
-        protected override System.Type GetSerializerType(NServiceBus.Features.FeatureConfigurationContext context) { }
-    }
     public class MessageDrivenSubscriptions : NServiceBus.Features.Feature
     {
         protected internal override void Setup(NServiceBus.Features.FeatureConfigurationContext context) { }
@@ -1599,10 +1601,6 @@ namespace NServiceBus.Features
     public class TimeoutManagerBasedDeferral
     {
         public TimeoutManagerBasedDeferral() { }
-    }
-    public class XmlSerialization : NServiceBus.Serialization.ConfigureSerialization
-    {
-        protected override System.Type GetSerializerType(NServiceBus.Features.FeatureConfigurationContext context) { }
     }
 }
 namespace NServiceBus.Gateway.Deduplication
@@ -2406,12 +2404,12 @@ namespace NServiceBus.SecondLevelRetries.Config
 }
 namespace NServiceBus.Serialization
 {
-    public abstract class ConfigureSerialization : NServiceBus.Features.Feature
+    [System.ObsoleteAttribute("To use a custom serializer derive from SerializationDefinition and provide a fact" +
+        "ory method for creating the serializer instance. Will be removed in version 7.0." +
+        "0.", true)]
+    public abstract class ConfigureSerialization
     {
         protected ConfigureSerialization() { }
-        protected abstract System.Type GetSerializerType(NServiceBus.Features.FeatureConfigurationContext context);
-        protected virtual void RegisterSerializer(NServiceBus.Features.FeatureConfigurationContext context, System.Type serializerType) { }
-        protected internal void Setup(NServiceBus.Features.FeatureConfigurationContext context) { }
     }
     public interface IMessageSerializer
     {
@@ -2422,40 +2420,12 @@ namespace NServiceBus.Serialization
     public abstract class SerializationDefinition
     {
         protected SerializationDefinition() { }
-        protected internal abstract System.Type ProvidedByFeature();
+        protected internal abstract System.Func<NServiceBus.MessageInterfaces.IMessageMapper, NServiceBus.Serialization.IMessageSerializer> Configure(NServiceBus.Settings.ReadOnlySettings settings);
     }
     public class SerializationExtentions<T> : NServiceBus.Configuration.AdvanceExtensibility.ExposeSettings
         where T : NServiceBus.Serialization.SerializationDefinition
     {
         public SerializationExtentions(NServiceBus.Settings.SettingsHolder settings) { }
-    }
-}
-namespace NServiceBus.Serializers.Json
-{
-    public class JsonMessageSerializer : NServiceBus.Serialization.IMessageSerializer
-    {
-        public JsonMessageSerializer(NServiceBus.MessageInterfaces.IMessageMapper messageMapper) { }
-        public string ContentType { get; }
-        public System.Text.Encoding Encoding { get; set; }
-        public object[] Deserialize(System.IO.Stream stream, System.Collections.Generic.IList<System.Type> messageTypes) { }
-        public object DeserializeObject(string value, System.Type type) { }
-        public void Serialize(object message, System.IO.Stream stream) { }
-        public string SerializeObject(object value) { }
-    }
-}
-namespace NServiceBus.Serializers.XML
-{
-    public class XmlMessageSerializer : NServiceBus.Serialization.IMessageSerializer
-    {
-        public XmlMessageSerializer(NServiceBus.MessageInterfaces.IMessageMapper mapper, NServiceBus.Conventions conventions) { }
-        public string ContentType { get; }
-        public string Namespace { get; set; }
-        public bool SanitizeInput { get; set; }
-        public bool SkipWrappingRawXml { get; set; }
-        public object[] Deserialize(System.IO.Stream stream, System.Collections.Generic.IList<System.Type> messageTypesToDeserialize = null) { }
-        public void Initialize(System.Collections.Generic.IEnumerable<System.Type> types) { }
-        public void InitType(System.Type t) { }
-        public void Serialize(object message, System.IO.Stream stream) { }
     }
 }
 namespace NServiceBus.Settings
