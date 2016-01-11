@@ -15,8 +15,7 @@ namespace NServiceBus
         public TransportReceivingConfigurationResult Configure(ReadOnlySettings settings)
         {
             var connectionString = settings.Get<TransportConnectionString>().GetConnectionStringOrRaiseError(Definition);
-            var context = new TransportReceivingConfigurationContext(settings, connectionString);
-            return Definition.ConfigureForReceiving(context);
+            return Definition.Support.CreateReceivingConfiguration(connectionString);
         }        
     }
 }

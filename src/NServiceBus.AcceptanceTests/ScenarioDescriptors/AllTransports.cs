@@ -7,7 +7,6 @@
     using AcceptanceTesting.Support;
     using NServiceBus.DelayedDelivery;
     using NServiceBus.Hosting.Helpers;
-    using NServiceBus.Settings;
     using NServiceBus.Transports;
 
     public class AllTransports : ScenarioDescriptor
@@ -41,7 +40,7 @@
     {
         public AllDtcTransports()
         {
-            AllTransportsFilter.Run(t => t.GetSupportedTransactionMode() != TransportTransactionMode.TransactionScope, Remove);
+            AllTransportsFilter.Run(t => t.Support.TransactionMode != TransportTransactionMode.TransactionScope, Remove);
         }
     }
 
@@ -49,7 +48,7 @@
     {
         public AllNativeMultiQueueTransactionTransports()
         {
-            AllTransportsFilter.Run(t => t.GetSupportedTransactionMode() < TransportTransactionMode.SendsAtomicWithReceive, Remove);
+            AllTransportsFilter.Run(t => t.Support.TransactionMode < TransportTransactionMode.SendsAtomicWithReceive, Remove);
         }
     }
 
@@ -57,7 +56,7 @@
     {
         public AllTransportsWithCentralizedPubSubSupport()
         {
-            AllTransportsFilter.Run(t => t.GetOutboundRoutingPolicy(new SettingsHolder()).Publishes == OutboundRoutingType.Unicast, Remove);
+            AllTransportsFilter.Run(t => t.Support.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast, Remove);
         }
     }
 
@@ -65,7 +64,7 @@
     {
         public AllTransportsWithMessageDrivenPubSub()
         {
-            AllTransportsFilter.Run(t => t.GetOutboundRoutingPolicy(new SettingsHolder()).Publishes == OutboundRoutingType.Multicast, Remove);
+            AllTransportsFilter.Run(t => t.Support.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Multicast, Remove);
         }
     }
 
@@ -73,13 +72,12 @@
     {
         public AllTransportsWithoutNativeDeferral()
         {
-            AllTransportsFilter.Run(t => t.GetSupportedDeliveryConstraints().Any(c => typeof(DelayedDeliveryConstraint).IsAssignableFrom(c)), Remove);
+            AllTransportsFilter.Run(t => t.Support.DeliveryConstraints.Any(c => typeof(DelayedDeliveryConstraint).IsAssignableFrom(c)), Remove);
         }
     }
 
     public class TypeScanner
     {
-
         public static IEnumerable<Type> GetAllTypesAssignableTo<T>()
         {
             return AvailableAssemblies.SelectMany(a => a.GetTypes())

@@ -28,104 +28,6 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Configures transport for receiving.
-        /// </summary>
-        protected internal override TransportReceivingConfigurationResult ConfigureForReceiving(TransportReceivingConfigurationContext context)
-        {
-            new CheckMachineNameForComplianceWithDtcLimitation().Check();
-
-            var settings = context.ConnectionString != null
-                ? new MsmqConnectionStringBuilder(context.ConnectionString).RetrieveSettings()
-                : new MsmqSettings();
-
-            var transactionSettings = new TransactionSettings(context.Settings);
-            var transactionOptions = new TransactionOptions
-            {
-                IsolationLevel = transactionSettings.IsolationLevel,
-                Timeout = transactionSettings.TransactionTimeout
-            };
-
-            return new TransportReceivingConfigurationResult(
-                () => new MessagePump(guarantee => SelectReceiveStrategy(guarantee, transactionOptions)),
-                () => new QueueCreator(settings), 
-                () =>
-                {
-                    var bindings = context.Settings.Get<QueueBindings>();
-                    new QueuePermissionChecker().CheckQueuePermissions(bindings.ReceivingAddresses);
-                    return Task.FromResult(StartupCheckResult.Success);
-                });
-        }
-
-        ReceiveStrategy SelectReceiveStrategy(TransportTransactionMode minimumConsistencyGuarantee, TransactionOptions transactionOptions)
-        {
-            if (minimumConsistencyGuarantee == TransportTransactionMode.TransactionScope)
-            {
-                return new ReceiveWithTransactionScope(transactionOptions);
-            }
-
-            if (minimumConsistencyGuarantee == TransportTransactionMode.None)
-            {
-                return new ReceiveWithNoTransaction();
-            }
-
-            return new ReceiveWithNativeTransaction();
-        }
-        
-        /// <summary>
-        /// Configures transport for sending.
-        /// </summary>
-        protected internal override TransportSendingConfigurationResult ConfigureForSending(TransportSendingConfigurationContext context)
-        {
-            new CheckMachineNameForComplianceWithDtcLimitation().Check();
-
-            Func<IReadOnlyDictionary<string, string>, string> getMessageLabel;
-            context.Settings.TryGet("Msmq.GetMessageLabel", out getMessageLabel);
-            var settings = new MsmqConnectionStringBuilder(context.ConnectionString).RetrieveSettings();
-
-            MsmqLabelGenerator messageLabelGenerator;
-            if (!context.Settings.TryGet(out messageLabelGenerator))
-            {
-                messageLabelGenerator = headers => string.Empty;
-            }
-            return new TransportSendingConfigurationResult(
-                () => new MsmqMessageSender(settings, messageLabelGenerator),
-                () =>
-                {
-                    var bindings = context.Settings.Get<QueueBindings>();
-                    new QueuePermissionChecker().CheckQueuePermissions(bindings.SendingAddresses);
-                    var result = new MsmqTimeToBeReceivedOverrideCheck(context.Settings).CheckTimeToBeReceivedOverrides();
-                    return Task.FromResult(result);
-                });
-        }
-
-        /// <summary>
-        /// The list of constraints supported by the MSMQ transport.
-        /// </summary>
-        public override IEnumerable<Type> GetSupportedDeliveryConstraints()
-        {
-            return new[]
-            {
-                typeof(DiscardIfNotReceivedBefore)
-            };
-        }
-
-        /// <summary>
-        /// Gets the supported transactionality for this transport.
-        /// </summary>
-        public override TransportTransactionMode GetSupportedTransactionMode()
-        {
-            return TransportTransactionMode.TransactionScope;
-        }
-
-        /// <summary>
-        /// Not used by the msmq transport.
-        /// </summary>
-        public override IManageSubscriptions GetSubscriptionManager()
-        {
-            throw new NotSupportedException("Msmq don't support native pub sub");
-        }
-
-        /// <summary>
         /// Returns the discriminator for this endpoint instance.
         /// </summary>
         public override EndpointInstance BindToLocalEndpoint(EndpointInstance instance, ReadOnlySettings settings) => instance.AtMachine(Environment.MachineName);
@@ -165,11 +67,81 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Returns the outbound routing policy selected for the transport.
+        /// 
         /// </summary>
-        public override OutboundRoutingPolicy GetOutboundRoutingPolicy(ReadOnlySettings settings)
+        /// <param name="settings"></param>
+        /// <returns></returns>
+        public override SupportedByTransport Initialize(SettingsHolder settings)
         {
-            return new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
+            return new SupportedByTransport(TransportTransactionMode.TransactionScope, new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast),
+                connectionString =>
+                {
+                    new CheckMachineNameForComplianceWithDtcLimitation().Check();
+
+                    Func<IReadOnlyDictionary<string, string>, string> getMessageLabel;
+                    settings.TryGet("Msmq.GetMessageLabel", out getMessageLabel);
+                    var builder = new MsmqConnectionStringBuilder(connectionString).RetrieveSettings();
+
+                    MsmqLabelGenerator messageLabelGenerator;
+                    if (!settings.TryGet(out messageLabelGenerator))
+                    {
+                        messageLabelGenerator = headers => string.Empty;
+                    }
+                    return new TransportSendingConfigurationResult(
+                        () => new MsmqMessageSender(builder, messageLabelGenerator),
+                        () =>
+                        {
+                            var bindings = settings.Get<QueueBindings>();
+                            new QueuePermissionChecker().CheckQueuePermissions(bindings.SendingAddresses);
+                            var result = new MsmqTimeToBeReceivedOverrideCheck(settings).CheckTimeToBeReceivedOverrides();
+                            return Task.FromResult(result);
+                        });
+                },
+                connectionString =>
+                {
+                    new CheckMachineNameForComplianceWithDtcLimitation().Check();
+
+                    var builder = connectionString != null
+                        ? new MsmqConnectionStringBuilder(connectionString).RetrieveSettings()
+                        : new MsmqSettings();
+
+                    var transactionSettings = new TransactionSettings(settings);
+                    var transactionOptions = new TransactionOptions
+                    {
+                        IsolationLevel = transactionSettings.IsolationLevel,
+                        Timeout = transactionSettings.TransactionTimeout
+                    };
+
+                    return new TransportReceivingConfigurationResult(
+                        () => new MessagePump(guarantee => SelectReceiveStrategy(guarantee, transactionOptions)),
+                        () => new QueueCreator(builder),
+                        () =>
+                        {
+                            var bindings = settings.Get<QueueBindings>();
+                            new QueuePermissionChecker().CheckQueuePermissions(bindings.ReceivingAddresses);
+                            return Task.FromResult(StartupCheckResult.Success);
+                        });
+                }
+,
+                new[]
+            {
+                typeof(DiscardIfNotReceivedBefore)
+            });
+        }
+
+        ReceiveStrategy SelectReceiveStrategy(TransportTransactionMode minimumConsistencyGuarantee, TransactionOptions transactionOptions)
+        {
+            if (minimumConsistencyGuarantee == TransportTransactionMode.TransactionScope)
+            {
+                return new ReceiveWithTransactionScope(transactionOptions);
+            }
+
+            if (minimumConsistencyGuarantee == TransportTransactionMode.None)
+            {
+                return new ReceiveWithNoTransaction();
+            }
+
+            return new ReceiveWithNativeTransaction();
         }
 
         /// <summary>

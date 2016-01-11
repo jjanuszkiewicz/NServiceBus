@@ -401,8 +401,6 @@
     <Compile Include="Transports\PushContext.cs" />
     <Compile Include="Transports\QueueBindings.cs" />
     <Compile Include="Transports\IncomingMessage.cs" />
-    <Compile Include="Transports\TransportReceivingConfigurationContext.cs" />
-    <Compile Include="Transports\TransportSendingConfigurationContext.cs" />
     <Compile Include="Transports\TransportOperation.cs" />
     <Compile Include="Pipeline\Outgoing\HeaderOptionExtensions.cs" />
     <Compile Include="Pipeline\Outgoing\MessageIdExtensions.cs" />

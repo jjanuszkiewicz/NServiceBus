@@ -1,8 +1,6 @@
 ﻿namespace NServiceBus.Core.Tests.DeliveryConstraintContextExtensions
 {
     using System;
-    using System.Collections.Generic;
-    using NServiceBus.DelayedDelivery;
     using NServiceBus.DeliveryConstraints;
     using NServiceBus.Features;
     using NServiceBus.Routing;
@@ -26,31 +24,6 @@
 
         class FakeTransportDefinition : TransportDefinition
         {
-            protected internal override TransportReceivingConfigurationResult ConfigureForReceiving(TransportReceivingConfigurationContext context)
-            {
-                throw new NotImplementedException();
-            }
-
-            protected internal override TransportSendingConfigurationResult ConfigureForSending(TransportSendingConfigurationContext context)
-            {
-                throw new NotImplementedException();
-            }
-
-            public override IEnumerable<Type> GetSupportedDeliveryConstraints()
-            {
-                yield return typeof(DelayDeliveryWith);
-            }
-
-            public override TransportTransactionMode GetSupportedTransactionMode()
-            {
-                throw new NotImplementedException();
-            }
-
-            public override IManageSubscriptions GetSubscriptionManager()
-            {
-                throw new NotImplementedException();
-            }
-
             public override EndpointInstance BindToLocalEndpoint(EndpointInstance instance, ReadOnlySettings settings)
             {
                 throw new NotImplementedException();
@@ -61,12 +34,12 @@
                 throw new NotImplementedException();
             }
 
-            public override OutboundRoutingPolicy GetOutboundRoutingPolicy(ReadOnlySettings settings)
+            public override SupportedByTransport Initialize(SettingsHolder settings)
             {
                 throw new NotImplementedException();
             }
 
-            public override string ExampleConnectionStringForErrorMessage { get; } = "";
+            public override string ExampleConnectionStringForErrorMessage { get; } = String.Empty;
         }
     }
 }

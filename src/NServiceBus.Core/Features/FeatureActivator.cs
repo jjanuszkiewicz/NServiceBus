@@ -7,6 +7,7 @@ namespace NServiceBus.Features
     using NServiceBus.ObjectBuilder;
     using Pipeline;
     using NServiceBus.Settings;
+    using NServiceBus.Transports;
 
     class FeatureActivator
     {
@@ -58,6 +59,9 @@ namespace NServiceBus.Features
             {
                 ActivateFeature(feature, enabledFeatures, container, pipelineSettings);
             }
+
+            settings.Get<TransportDefinition>().InitializeTransportSupport(settings);
+            
             settings.PreventChanges();
 
             return new FeaturesReport(features.Select(t => t.Diagnostics).ToList());

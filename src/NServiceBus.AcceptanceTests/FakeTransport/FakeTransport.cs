@@ -1,7 +1,6 @@
 ﻿namespace NServiceBus.AcceptanceTests.FakeTransport
 {
     using System;
-    using System.Collections.Generic;
     using System.Threading.Tasks;
     using NServiceBus.Routing;
     using Settings;
@@ -9,31 +8,6 @@
 
     public class FakeTransport : TransportDefinition
     {
-        protected override TransportReceivingConfigurationResult ConfigureForReceiving(TransportReceivingConfigurationContext context)
-        {
-            return new TransportReceivingConfigurationResult(() => new FakeReceiver(context.Settings.Get<Exception>()), () => new FakeQueueCreator(), () => Task.FromResult(StartupCheckResult.Success));
-        }
-
-        protected override TransportSendingConfigurationResult ConfigureForSending(TransportSendingConfigurationContext context)
-        {
-            return new TransportSendingConfigurationResult(() => new FakeDispatcher(), () => Task.FromResult(StartupCheckResult.Success));
-        }
-
-        public override IEnumerable<Type> GetSupportedDeliveryConstraints()
-        {
-            return new List<Type>();
-        }
-
-        public override TransportTransactionMode GetSupportedTransactionMode()
-        {
-            return TransportTransactionMode.ReceiveOnly;
-        }
-
-        public override IManageSubscriptions GetSubscriptionManager()
-        {
-            throw new NotImplementedException();
-        }
-
         public override EndpointInstance BindToLocalEndpoint(EndpointInstance instance, ReadOnlySettings settings)
         {
             return instance;
@@ -44,12 +18,15 @@
             return logicalAddress.ToString();
         }
 
-        public override OutboundRoutingPolicy GetOutboundRoutingPolicy(ReadOnlySettings settings)
-        {
-            return new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
-        }
-
         public override bool RequiresConnectionString => false;
+
+        public override SupportedByTransport Initialize(SettingsHolder settings)
+        {
+            return new SupportedByTransport(TransportTransactionMode.ReceiveOnly,
+                new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast),
+                s => new TransportSendingConfigurationResult(() => new FakeDispatcher(), () => Task.FromResult(StartupCheckResult.Success)),
+                s => new TransportReceivingConfigurationResult(() => new FakeReceiver(settings.Get<Exception>()), () => new FakeQueueCreator(), () => Task.FromResult(StartupCheckResult.Success)));
+        }
 
         public override string ExampleConnectionStringForErrorMessage => null;
     }

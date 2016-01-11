@@ -16,32 +16,6 @@ namespace NServiceBus.Transports
         public bool RequireOutboxConsent { get; set; }
 
         /// <summary>
-        /// Configures transport for receiving.
-        /// </summary>
-        protected internal abstract TransportReceivingConfigurationResult ConfigureForReceiving(TransportReceivingConfigurationContext context);
-
-        /// <summary>
-        /// Configures transport for sending.
-        /// </summary>
-        protected internal abstract TransportSendingConfigurationResult ConfigureForSending(TransportSendingConfigurationContext context);
-        
-        /// <summary>
-        /// Returns the list of supported delivery constraints for this transport.
-        /// </summary>
-        public abstract IEnumerable<Type> GetSupportedDeliveryConstraints();
-
-        /// <summary>
-        /// Gets the highest supported transaction mode for the this transport.
-        /// </summary>
-        public abstract TransportTransactionMode GetSupportedTransactionMode();
-
-        /// <summary>
-        /// Will be called if the transport has indicated that it has native support for pub sub.
-        /// Creates a transport address for the input queue defined by a logical address.
-        /// </summary>
-        public abstract IManageSubscriptions GetSubscriptionManager();
-
-        /// <summary>
         /// Returns the discriminator for this endpoint instance.
         /// </summary>
         public abstract EndpointInstance BindToLocalEndpoint(EndpointInstance instance, ReadOnlySettings settings);
@@ -63,9 +37,11 @@ namespace NServiceBus.Transports
         }
 
         /// <summary>
-        /// Returns the outbound routing policy selected for the transport.
+        /// 
         /// </summary>
-        public abstract OutboundRoutingPolicy GetOutboundRoutingPolicy(ReadOnlySettings settings);
+        /// <param name="settings"></param>
+        /// <returns></returns>
+        public abstract SupportedByTransport Initialize(SettingsHolder settings);
 
         /// <summary>
         /// Gets an example connection string to use when reporting lack of configured connection string to the user.
@@ -75,6 +51,68 @@ namespace NServiceBus.Transports
         /// <summary>
         /// Used by implementations to control if a connection string is necessary.
         /// </summary>
-        public virtual bool RequiresConnectionString => true;        
+        public virtual bool RequiresConnectionString => true;
+
+        internal void InitializeTransportSupport(SettingsHolder settings)
+        {
+            Support = Initialize(settings);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public SupportedByTransport Support { get; private set; }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class SupportedByTransport
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="transactionMode"></param>
+        /// <param name="outboundRoutingPolicy"></param>
+        /// <param name="createSendingConfiguration"></param>
+        /// <param name="createReceivingConfiguration"></param>
+        /// <param name="deliveryConstraints"></param>
+        /// <param name="subscriptionManager"></param>
+        public SupportedByTransport(TransportTransactionMode transactionMode, OutboundRoutingPolicy outboundRoutingPolicy, Func<string, TransportSendingConfigurationResult> createSendingConfiguration, Func<string, TransportReceivingConfigurationResult> createReceivingConfiguration = null, IEnumerable<Type> deliveryConstraints = null, IManageSubscriptions subscriptionManager = null)
+        {
+            SubscriptionManager = subscriptionManager;
+            DeliveryConstraints = deliveryConstraints;
+            TransactionMode = transactionMode;
+            OutboundRoutingPolicy = outboundRoutingPolicy;
+            CreateReceivingConfiguration = createReceivingConfiguration;
+            CreateSendingConfiguration = createSendingConfiguration;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public Func<string, TransportReceivingConfigurationResult> CreateReceivingConfiguration { get; }
+            
+        /// <summary>
+        ///     
+        /// </summary>
+        public Func<string, TransportSendingConfigurationResult> CreateSendingConfiguration { get; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public IManageSubscriptions SubscriptionManager { get; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public IEnumerable<Type> DeliveryConstraints { get; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public TransportTransactionMode TransactionMode { get; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public OutboundRoutingPolicy OutboundRoutingPolicy { get; }
     }
 }

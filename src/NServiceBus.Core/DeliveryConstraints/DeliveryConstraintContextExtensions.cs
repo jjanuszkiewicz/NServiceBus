@@ -101,7 +101,7 @@ namespace NServiceBus.DeliveryConstraints
         internal static bool DoesTransportSupportConstraint<T>(this FeatureConfigurationContext context) where T : DeliveryConstraint
         {
             return context.Settings.Get<TransportDefinition>()
-                .GetSupportedDeliveryConstraints().Any(t => typeof(T).IsAssignableFrom(t));
+                .Support.DeliveryConstraints.Any(t => typeof(T).IsAssignableFrom(t));
         }
 
         static void AddDeliveryConstraintInternal(IBehaviorContext context, DeliveryConstraint constraint)
