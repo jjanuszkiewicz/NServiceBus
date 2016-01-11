@@ -1,5 +1,6 @@
 namespace NServiceBus.Features
 {
+    using System;
     using NServiceBus.Transports;
 
     /// <summary>
@@ -11,7 +12,6 @@ namespace NServiceBus.Features
         internal MessageDrivenSubscriptions()
         {
             EnableByDefault();
-            Prerequisite(c => c.Settings.Get<TransportDefinition>().Support.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast, "The transport supports native pub sub");
         }
 
         /// <summary>
@@ -19,6 +19,13 @@ namespace NServiceBus.Features
         /// </summary>
         protected internal override void Setup(FeatureConfigurationContext context)
         {
+            var transportDefinition = context.Settings.Get<TransportDefinition>();
+            if (transportDefinition.Support.OutboundRoutingPolicy.Publishes != OutboundRoutingType.Unicast)
+            {
+                var message = $"The transport {transportDefinition.GetType().Name} supports native publish-subscribe so subscriptions are not managed by the transport in the publishing endpoint.";
+                throw new Exception(message);
+            }
+
             context.Pipeline.Register<SubscriptionReceiverBehavior.Registration>();
             var authorizer = context.Settings.GetSubscriptionAuthorizer();
             if (authorizer == null)

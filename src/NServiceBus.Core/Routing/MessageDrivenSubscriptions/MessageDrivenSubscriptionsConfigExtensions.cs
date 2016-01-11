@@ -1,8 +1,6 @@
 namespace NServiceBus
 {
-    using System;
     using NServiceBus.Settings;
-    using NServiceBus.Transports;
 
     /// <summary>
     /// Provides extensions for configuring message driven subscriptions.
@@ -31,15 +29,8 @@ namespace NServiceBus
         public static void SubscriptionAuthorizer(this TransportExtensions transportExtensions, SubscriptionAuthorizer authorizer)
         {
             Guard.AgainstNull(nameof(authorizer), authorizer);
-            var settings = transportExtensions.Settings;
-            var transport = settings.Get<TransportDefinition>();
-            if (transport.Support.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Multicast)
-            {
-                var message = $"The transport {transport.GetType().Name} supports native publish-subscribe so subscriptions are not managed by the transport in the publishing endpoint. Use the native transport tools managing subscritions.";
-                throw new ArgumentException(message, nameof(authorizer));
-            }
 
-            settings.Set<SubscriptionAuthorizer>(authorizer);
+            transportExtensions.Settings.Set<SubscriptionAuthorizer>(authorizer);
         }
 
         internal static SubscriptionAuthorizer GetSubscriptionAuthorizer(this ReadOnlySettings settings)
