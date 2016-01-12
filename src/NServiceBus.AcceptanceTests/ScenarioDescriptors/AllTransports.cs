@@ -40,7 +40,7 @@
     {
         public AllDtcTransports()
         {
-            AllTransportsFilter.Run(t => t.Support.TransactionMode != TransportTransactionMode.TransactionScope, Remove);
+            AllTransportsFilter.Run(t => t.TransactionMode != TransportTransactionMode.TransactionScope, Remove);
         }
     }
 
@@ -48,7 +48,7 @@
     {
         public AllNativeMultiQueueTransactionTransports()
         {
-            AllTransportsFilter.Run(t => t.Support.TransactionMode < TransportTransactionMode.SendsAtomicWithReceive, Remove);
+            AllTransportsFilter.Run(t => t.TransactionMode < TransportTransactionMode.SendsAtomicWithReceive, Remove);
         }
     }
 
@@ -56,7 +56,7 @@
     {
         public AllTransportsWithCentralizedPubSubSupport()
         {
-            AllTransportsFilter.Run(t => t.Support.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast, Remove);
+            AllTransportsFilter.Run(t => t.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast, Remove);
         }
     }
 
@@ -64,7 +64,7 @@
     {
         public AllTransportsWithMessageDrivenPubSub()
         {
-            AllTransportsFilter.Run(t => t.Support.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Multicast, Remove);
+            AllTransportsFilter.Run(t => t.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Multicast, Remove);
         }
     }
 
@@ -72,7 +72,7 @@
     {
         public AllTransportsWithoutNativeDeferral()
         {
-            AllTransportsFilter.Run(t => t.Support.DeliveryConstraints.Any(c => typeof(DelayedDeliveryConstraint).IsAssignableFrom(c)), Remove);
+            AllTransportsFilter.Run(t => t.DeliveryConstraints.Any(c => typeof(DelayedDeliveryConstraint).IsAssignableFrom(c)), Remove);
         }
     }
 

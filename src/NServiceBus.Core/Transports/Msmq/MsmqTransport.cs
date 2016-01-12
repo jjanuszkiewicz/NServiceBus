@@ -71,62 +71,56 @@ namespace NServiceBus
         /// </summary>
         /// <param name="settings">Foo.</param>
         /// <returns>Foo.</returns>
-        public override SupportedByTransport Initialize(SettingsHolder settings)
+        protected override FactoriesDefinitions Initialize(SettingsHolder settings)
         {
-            return new SupportedByTransport(TransportTransactionMode.TransactionScope, new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast),
-                connectionString =>
-                {
-                    new CheckMachineNameForComplianceWithDtcLimitation().Check();
+            return new FactoriesDefinitions(connectionString =>
+{
+    new CheckMachineNameForComplianceWithDtcLimitation().Check();
 
-                    Func<IReadOnlyDictionary<string, string>, string> getMessageLabel;
-                    settings.TryGet("Msmq.GetMessageLabel", out getMessageLabel);
-                    var builder = new MsmqConnectionStringBuilder(connectionString).RetrieveSettings();
+    Func<IReadOnlyDictionary<string, string>, string> getMessageLabel;
+    settings.TryGet("Msmq.GetMessageLabel", out getMessageLabel);
+    var builder = new MsmqConnectionStringBuilder(connectionString).RetrieveSettings();
 
-                    MsmqLabelGenerator messageLabelGenerator;
-                    if (!settings.TryGet(out messageLabelGenerator))
-                    {
-                        messageLabelGenerator = headers => string.Empty;
-                    }
-                    return new TransportSendingConfigurationResult(
-                        () => new MsmqMessageSender(builder, messageLabelGenerator),
-                        () =>
-                        {
-                            var bindings = settings.Get<QueueBindings>();
-                            new QueuePermissionChecker().CheckQueuePermissions(bindings.SendingAddresses);
-                            var result = new MsmqTimeToBeReceivedOverrideCheck(settings).CheckTimeToBeReceivedOverrides();
-                            return Task.FromResult(result);
-                        });
-                },
-                connectionString =>
-                {
-                    new CheckMachineNameForComplianceWithDtcLimitation().Check();
+    MsmqLabelGenerator messageLabelGenerator;
+    if (!settings.TryGet(out messageLabelGenerator))
+    {
+        messageLabelGenerator = headers => string.Empty;
+    }
+    return new TransportSendingConfigurationResult(
+        () => new MsmqMessageSender(builder, messageLabelGenerator),
+        () =>
+        {
+            var bindings = settings.Get<QueueBindings>();
+            new QueuePermissionChecker().CheckQueuePermissions(bindings.SendingAddresses);
+            var result = new MsmqTimeToBeReceivedOverrideCheck(settings).CheckTimeToBeReceivedOverrides();
+            return Task.FromResult(result);
+        });
+}, connectionString =>
+{
+    new CheckMachineNameForComplianceWithDtcLimitation().Check();
 
-                    var builder = connectionString != null
-                        ? new MsmqConnectionStringBuilder(connectionString).RetrieveSettings()
-                        : new MsmqSettings();
+    var builder = connectionString != null
+        ? new MsmqConnectionStringBuilder(connectionString).RetrieveSettings()
+        : new MsmqSettings();
 
-                    var transactionSettings = new TransactionSettings(settings);
-                    var transactionOptions = new TransactionOptions
-                    {
-                        IsolationLevel = transactionSettings.IsolationLevel,
-                        Timeout = transactionSettings.TransactionTimeout
-                    };
+    var transactionSettings = new TransactionSettings(settings);
+    var transactionOptions = new TransactionOptions
+    {
+        IsolationLevel = transactionSettings.IsolationLevel,
+        Timeout = transactionSettings.TransactionTimeout
+    };
 
-                    return new TransportReceivingConfigurationResult(
-                        () => new MessagePump(guarantee => SelectReceiveStrategy(guarantee, transactionOptions)),
-                        () => new QueueCreator(builder),
-                        () =>
-                        {
-                            var bindings = settings.Get<QueueBindings>();
-                            new QueuePermissionChecker().CheckQueuePermissions(bindings.ReceivingAddresses);
-                            return Task.FromResult(StartupCheckResult.Success);
-                        });
-                }
-,
-                new[]
-            {
-                typeof(DiscardIfNotReceivedBefore)
-            });
+    return new TransportReceivingConfigurationResult(
+        () => new MessagePump(guarantee => SelectReceiveStrategy(guarantee, transactionOptions)),
+        () => new QueueCreator(builder),
+        () =>
+        {
+            var bindings = settings.Get<QueueBindings>();
+            new QueuePermissionChecker().CheckQueuePermissions(bindings.ReceivingAddresses);
+            return Task.FromResult(StartupCheckResult.Success);
+        });
+}
+);
         }
 
         ReceiveStrategy SelectReceiveStrategy(TransportTransactionMode minimumConsistencyGuarantee, TransactionOptions transactionOptions)
@@ -153,5 +147,23 @@ namespace NServiceBus
         /// Used by implementations to control if a connection string is necessary.
         /// </summary>
         public override bool RequiresConnectionString => false;
+
+        /// <summary>
+        /// dsfsdf.
+        /// </summary>
+        public override IEnumerable<Type> DeliveryConstraints => new[]
+        {
+            typeof(DiscardIfNotReceivedBefore)
+        };
+
+        /// <summary>
+        /// dsfsdf.
+        /// </summary>
+        public override TransportTransactionMode TransactionMode => TransportTransactionMode.TransactionScope;
+
+        /// <summary>
+        /// dsfsdf.
+        /// </summary>
+        public override OutboundRoutingPolicy OutboundRoutingPolicy => new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
     }
 }

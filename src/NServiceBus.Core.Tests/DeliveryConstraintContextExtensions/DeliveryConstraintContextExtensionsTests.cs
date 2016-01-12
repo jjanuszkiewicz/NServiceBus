@@ -1,9 +1,10 @@
 ﻿namespace NServiceBus.Core.Tests.DeliveryConstraintContextExtensions
 {
     using System;
+    using System.Collections.Generic;
+    using NServiceBus.DelayedDelivery;
     using NServiceBus.DeliveryConstraints;
     using NServiceBus.Features;
-    using NServiceBus.Performance.TimeToBeReceived;
     using NServiceBus.Routing;
     using NServiceBus.Settings;
     using NServiceBus.Transports;
@@ -36,16 +37,20 @@
                 throw new NotImplementedException();
             }
 
-            public override SupportedByTransport Initialize(SettingsHolder settings)
+            protected override FactoriesDefinitions Initialize(SettingsHolder settings)
             {
-                return new SupportedByTransport(TransportTransactionMode.None, new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast),
-                    s => new TransportSendingConfigurationResult(() => null, () => null), deliveryConstraints: new[]
-                    {
-                        typeof(DiscardIfNotReceivedBefore)
-                    });
+                return new FactoriesDefinitions(s => new TransportSendingConfigurationResult(() => null, () => null));
             }
 
             public override string ExampleConnectionStringForErrorMessage { get; } = String.Empty;
+
+            public override IEnumerable<Type> DeliveryConstraints => new[]
+            {
+                typeof(DelayDeliveryWith)
+            };
+
+            public override TransportTransactionMode TransactionMode { get; }
+            public override OutboundRoutingPolicy OutboundRoutingPolicy { get; }
         }
     }
 }

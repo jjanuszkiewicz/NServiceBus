@@ -2,6 +2,7 @@ namespace NServiceBus.Transports
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using NServiceBus.Routing;
     using Settings;
 
@@ -13,7 +14,7 @@ namespace NServiceBus.Transports
         /// <summary>
         /// True if the transport.
         /// </summary>
-        public bool RequireOutboxConsent { get; set; }
+        public bool RequireOutboxConsent { get; protected set; }
 
         /// <summary>
         /// Returns the discriminator for this endpoint instance.
@@ -37,11 +38,11 @@ namespace NServiceBus.Transports
         }
 
         /// <summary>
-        /// Foo.
+        /// Initializes all the factories used for the transport.
         /// </summary>
-        /// <param name="settings">Foo.</param>
-        /// <returns>Foo.</returns>
-        public abstract SupportedByTransport Initialize(SettingsHolder settings);
+        /// <param name="settings">An instance of the current settings.</param>
+        /// <returns>The supported factories.</returns>
+        protected abstract FactoriesDefinitions Initialize(SettingsHolder settings);
 
         /// <summary>
         /// Gets an example connection string to use when reporting lack of configured connection string to the user.
@@ -53,66 +54,63 @@ namespace NServiceBus.Transports
         /// </summary>
         public virtual bool RequiresConnectionString => true;
 
+        /// <summary>
+        /// Returns the list of supported delivery constraints for this transport.
+        /// </summary>
+        public virtual IEnumerable<Type> DeliveryConstraints => Enumerable.Empty<Type>();
+
+        /// <summary>
+        /// Gets the highest supported transaction mode for the this transport.
+        /// </summary>
+        public abstract TransportTransactionMode TransactionMode { get; }
+
+        /// <summary>
+        /// Returns the outbound routing policy selected for the transport.
+        /// </summary>
+        public abstract OutboundRoutingPolicy OutboundRoutingPolicy { get; }
+
+        /// <summary>
+        /// The factories for this transport.
+        /// </summary>
+        public FactoriesDefinitions Support { get; private set; }
+
         internal void InitializeTransportSupport(SettingsHolder settings)
         {
             Support = Initialize(settings);
         }
-
-        /// <summary>
-        /// Foo.
-        /// </summary>
-        public SupportedByTransport Support { get; private set; }
     }
 
     /// <summary>
-    /// Foo.
+    /// Transport factory definitions.
     /// </summary>
-    public class SupportedByTransport
+    public class FactoriesDefinitions
     {
         /// <summary>
-        /// Foo.
+        /// Creates a new instance of <see cref="FactoriesDefinitions"/>.
         /// </summary>
-        /// <param name="transactionMode">Foo.</param>
-        /// <param name="outboundRoutingPolicy">Foo.</param>
-        /// <param name="createSendingConfiguration">Foo.</param>
-        /// <param name="createReceivingConfiguration">Foo.</param>
-        /// <param name="deliveryConstraints">Foo.</param>
-        /// <param name="subscriptionManager">Foo.</param>
-        public SupportedByTransport(TransportTransactionMode transactionMode, OutboundRoutingPolicy outboundRoutingPolicy, Func<string, TransportSendingConfigurationResult> createSendingConfiguration, Func<string, TransportReceivingConfigurationResult> createReceivingConfiguration = null, IEnumerable<Type> deliveryConstraints = null, IManageSubscriptions subscriptionManager = null)
+        /// <param name="createSendingConfiguration">The factory to create <see cref="IDispatchMessages"/>.</param>
+        /// <param name="createReceivingConfiguration">The factory to create <see cref="IPushMessages"/>.</param>
+        /// <param name="subscriptionManager">The instance of <see cref="IManageSubscriptions"/>.</param>
+        public FactoriesDefinitions(Func<string, TransportSendingConfigurationResult> createSendingConfiguration, Func<string, TransportReceivingConfigurationResult> createReceivingConfiguration = null, IManageSubscriptions subscriptionManager = null)
         {
             SubscriptionManager = subscriptionManager;
-            DeliveryConstraints = deliveryConstraints;
-            TransactionMode = transactionMode;
-            OutboundRoutingPolicy = outboundRoutingPolicy;
             CreateReceivingConfiguration = createReceivingConfiguration;
             CreateSendingConfiguration = createSendingConfiguration;
         }
 
         /// <summary>
-        /// Foo.
+        /// Gets the factory to receive message.
         /// </summary>
         public Func<string, TransportReceivingConfigurationResult> CreateReceivingConfiguration { get; }
 
         /// <summary>
-        ///   Foo.  
+        /// Gets the factory to send message.
         /// </summary>
         public Func<string, TransportSendingConfigurationResult> CreateSendingConfiguration { get; }
 
         /// <summary>
-        /// Foo.
+        /// Gets the instance to manage subscriptions.
         /// </summary>
         public IManageSubscriptions SubscriptionManager { get; }
-        /// <summary>
-        /// Foo.
-        /// </summary>
-        public IEnumerable<Type> DeliveryConstraints { get; }
-        /// <summary>
-        /// Foo.
-        /// </summary>
-        public TransportTransactionMode TransactionMode { get; }
-        /// <summary>
-        /// Foo.
-        /// </summary>
-        public OutboundRoutingPolicy OutboundRoutingPolicy { get; }
     }
 }

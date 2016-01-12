@@ -11,7 +11,7 @@ namespace NServiceBus.Features
         internal MessageDrivenSubscriptions()
         {
             EnableByDefault();
-            Prerequisite(c => c.Settings.Get<TransportDefinition>().Support.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast, "The transport supports native pub sub");
+            Prerequisite(c => c.Settings.Get<TransportDefinition>().OutboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast, "The transport supports native pub sub");
         }
 
         /// <summary>
