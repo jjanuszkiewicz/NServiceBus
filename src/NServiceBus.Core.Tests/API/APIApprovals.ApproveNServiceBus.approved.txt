@@ -715,12 +715,7 @@ namespace NServiceBus
         public override string ExampleConnectionStringForErrorMessage { get; }
         public override bool RequiresConnectionString { get; }
         public override NServiceBus.Routing.EndpointInstance BindToLocalEndpoint(NServiceBus.Routing.EndpointInstance instance, NServiceBus.Settings.ReadOnlySettings settings) { }
-        protected internal override NServiceBus.Transports.TransportReceivingConfigurationResult ConfigureForReceiving(NServiceBus.Transports.TransportReceivingConfigurationContext context) { }
-        protected internal override NServiceBus.Transports.TransportSendingConfigurationResult ConfigureForSending(NServiceBus.Transports.TransportSendingConfigurationContext context) { }
-        public override NServiceBus.Transports.OutboundRoutingPolicy GetOutboundRoutingPolicy(NServiceBus.Settings.ReadOnlySettings settings) { }
-        public override NServiceBus.Transports.IManageSubscriptions GetSubscriptionManager() { }
-        public override System.Collections.Generic.IEnumerable<System.Type> GetSupportedDeliveryConstraints() { }
-        public override NServiceBus.TransportTransactionMode GetSupportedTransactionMode() { }
+        public override NServiceBus.Transports.SupportedByTransport Initialize(NServiceBus.Settings.SettingsHolder settings) { }
         public override string MakeCanonicalForm(string transportAddress) { }
         public override string ToTransportAddress(NServiceBus.LogicalAddress logicalAddress) { }
     }
@@ -2742,6 +2737,16 @@ namespace NServiceBus.Transports
         public bool Succeeded { get; }
         public static NServiceBus.Transports.StartupCheckResult Failed(string errorMessage) { }
     }
+    public class SupportedByTransport
+    {
+        public SupportedByTransport(NServiceBus.TransportTransactionMode transactionMode, NServiceBus.Transports.OutboundRoutingPolicy outboundRoutingPolicy, System.Func<string, NServiceBus.Transports.TransportSendingConfigurationResult> createSendingConfiguration, System.Func<string, NServiceBus.Transports.TransportReceivingConfigurationResult> createReceivingConfiguration = null, System.Collections.Generic.IEnumerable<System.Type> deliveryConstraints = null, NServiceBus.Transports.IManageSubscriptions subscriptionManager = null) { }
+        public System.Func<string, NServiceBus.Transports.TransportReceivingConfigurationResult> CreateReceivingConfiguration { get; }
+        public System.Func<string, NServiceBus.Transports.TransportSendingConfigurationResult> CreateSendingConfiguration { get; }
+        public System.Collections.Generic.IEnumerable<System.Type> DeliveryConstraints { get; }
+        public NServiceBus.Transports.OutboundRoutingPolicy OutboundRoutingPolicy { get; }
+        public NServiceBus.Transports.IManageSubscriptions SubscriptionManager { get; }
+        public NServiceBus.TransportTransactionMode TransactionMode { get; }
+    }
     public class TransportAddresses
     {
         public void AddRule(System.Func<NServiceBus.LogicalAddress, string> dynamicRule) { }
@@ -2763,13 +2768,9 @@ namespace NServiceBus.Transports
         public bool HasSupportForMultiQueueNativeTransactions { get; set; }
         public bool RequireOutboxConsent { get; set; }
         public virtual bool RequiresConnectionString { get; }
+        public NServiceBus.Transports.SupportedByTransport Support { get; }
         public abstract NServiceBus.Routing.EndpointInstance BindToLocalEndpoint(NServiceBus.Routing.EndpointInstance instance, NServiceBus.Settings.ReadOnlySettings settings);
-        protected internal abstract NServiceBus.Transports.TransportReceivingConfigurationResult ConfigureForReceiving(NServiceBus.Transports.TransportReceivingConfigurationContext context);
-        protected internal abstract NServiceBus.Transports.TransportSendingConfigurationResult ConfigureForSending(NServiceBus.Transports.TransportSendingConfigurationContext context);
-        public abstract NServiceBus.Transports.OutboundRoutingPolicy GetOutboundRoutingPolicy(NServiceBus.Settings.ReadOnlySettings settings);
-        public abstract NServiceBus.Transports.IManageSubscriptions GetSubscriptionManager();
-        public abstract System.Collections.Generic.IEnumerable<System.Type> GetSupportedDeliveryConstraints();
-        public abstract NServiceBus.TransportTransactionMode GetSupportedTransactionMode();
+        public abstract NServiceBus.Transports.SupportedByTransport Initialize(NServiceBus.Settings.SettingsHolder settings);
         public virtual string MakeCanonicalForm(string transportAddress) { }
         public abstract string ToTransportAddress(NServiceBus.LogicalAddress logicalAddress);
     }
@@ -2787,19 +2788,9 @@ namespace NServiceBus.Transports
         public System.Collections.Generic.IEnumerable<NServiceBus.Transports.MulticastTransportOperation> MulticastTransportOperations { get; }
         public System.Collections.Generic.IEnumerable<NServiceBus.Transports.UnicastTransportOperation> UnicastTransportOperations { get; }
     }
-    public class TransportReceivingConfigurationContext
-    {
-        public string ConnectionString { get; }
-        public NServiceBus.Settings.ReadOnlySettings Settings { get; }
-    }
     public class TransportReceivingConfigurationResult
     {
         public TransportReceivingConfigurationResult(System.Func<NServiceBus.Transports.IPushMessages> messagePumpFactory, System.Func<NServiceBus.Transports.ICreateQueues> queueCreatorFactory, System.Func<System.Threading.Tasks.Task<NServiceBus.Transports.StartupCheckResult>> preStartupCheck) { }
-    }
-    public class TransportSendingConfigurationContext
-    {
-        public string ConnectionString { get; }
-        public NServiceBus.Settings.ReadOnlySettings Settings { get; }
     }
     public class TransportSendingConfigurationResult
     {
