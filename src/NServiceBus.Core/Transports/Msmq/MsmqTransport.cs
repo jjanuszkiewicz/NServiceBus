@@ -67,10 +67,10 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// 
+        /// Foo.
         /// </summary>
-        /// <param name="settings"></param>
-        /// <returns></returns>
+        /// <param name="settings">Foo.</param>
+        /// <returns>Foo.</returns>
         public override SupportedByTransport Initialize(SettingsHolder settings)
         {
             return new SupportedByTransport(TransportTransactionMode.TransactionScope, new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast),

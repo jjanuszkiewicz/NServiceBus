@@ -37,10 +37,10 @@ namespace NServiceBus.Transports
         }
 
         /// <summary>
-        /// 
+        /// Foo.
         /// </summary>
-        /// <param name="settings"></param>
-        /// <returns></returns>
+        /// <param name="settings">Foo.</param>
+        /// <returns>Foo.</returns>
         public abstract SupportedByTransport Initialize(SettingsHolder settings);
 
         /// <summary>
@@ -59,25 +59,25 @@ namespace NServiceBus.Transports
         }
 
         /// <summary>
-        /// 
+        /// Foo.
         /// </summary>
         public SupportedByTransport Support { get; private set; }
     }
 
     /// <summary>
-    /// 
+    /// Foo.
     /// </summary>
     public class SupportedByTransport
     {
         /// <summary>
-        /// 
+        /// Foo.
         /// </summary>
-        /// <param name="transactionMode"></param>
-        /// <param name="outboundRoutingPolicy"></param>
-        /// <param name="createSendingConfiguration"></param>
-        /// <param name="createReceivingConfiguration"></param>
-        /// <param name="deliveryConstraints"></param>
-        /// <param name="subscriptionManager"></param>
+        /// <param name="transactionMode">Foo.</param>
+        /// <param name="outboundRoutingPolicy">Foo.</param>
+        /// <param name="createSendingConfiguration">Foo.</param>
+        /// <param name="createReceivingConfiguration">Foo.</param>
+        /// <param name="deliveryConstraints">Foo.</param>
+        /// <param name="subscriptionManager">Foo.</param>
         public SupportedByTransport(TransportTransactionMode transactionMode, OutboundRoutingPolicy outboundRoutingPolicy, Func<string, TransportSendingConfigurationResult> createSendingConfiguration, Func<string, TransportReceivingConfigurationResult> createReceivingConfiguration = null, IEnumerable<Type> deliveryConstraints = null, IManageSubscriptions subscriptionManager = null)
         {
             SubscriptionManager = subscriptionManager;
@@ -89,29 +89,29 @@ namespace NServiceBus.Transports
         }
 
         /// <summary>
-        /// 
+        /// Foo.
         /// </summary>
         public Func<string, TransportReceivingConfigurationResult> CreateReceivingConfiguration { get; }
-            
+
         /// <summary>
-        ///     
+        ///   Foo.  
         /// </summary>
         public Func<string, TransportSendingConfigurationResult> CreateSendingConfiguration { get; }
 
         /// <summary>
-        /// 
+        /// Foo.
         /// </summary>
         public IManageSubscriptions SubscriptionManager { get; }
         /// <summary>
-        /// 
+        /// Foo.
         /// </summary>
         public IEnumerable<Type> DeliveryConstraints { get; }
         /// <summary>
-        /// 
+        /// Foo.
         /// </summary>
         public TransportTransactionMode TransactionMode { get; }
         /// <summary>
-        /// 
+        /// Foo.
         /// </summary>
         public OutboundRoutingPolicy OutboundRoutingPolicy { get; }
     }

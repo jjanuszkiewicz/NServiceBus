@@ -7,7 +7,6 @@ namespace NServiceBus.Features
     using NServiceBus.ObjectBuilder;
     using Pipeline;
     using NServiceBus.Settings;
-    using NServiceBus.Transports;
 
     class FeatureActivator
     {
@@ -39,8 +38,6 @@ namespace NServiceBus.Features
 
         public FeaturesReport SetupFeatures(IConfigureComponents container, PipelineSettings pipelineSettings)
         {
-            settings.Get<TransportDefinition>().InitializeTransportSupport(settings);
-
             // featuresToActivate is enumerated twice because after setting defaults some new features might got activated.
             var sourceFeatures = Sort(features);
 
