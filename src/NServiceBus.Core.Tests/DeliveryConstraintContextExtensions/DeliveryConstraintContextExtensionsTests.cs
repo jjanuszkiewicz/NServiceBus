@@ -1,7 +1,6 @@
 ﻿namespace NServiceBus.Core.Tests.DeliveryConstraintContextExtensions
 {
     using System;
-    using System.Collections.Generic;
     using NServiceBus.DelayedDelivery;
     using NServiceBus.DeliveryConstraints;
     using NServiceBus.Features;

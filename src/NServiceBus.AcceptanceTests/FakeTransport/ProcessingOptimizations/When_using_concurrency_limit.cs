@@ -1,7 +1,6 @@
 ﻿namespace NServiceBus.AcceptanceTests.Config
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
     using NServiceBus.AcceptanceTesting;

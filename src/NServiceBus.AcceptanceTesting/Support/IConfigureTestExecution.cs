@@ -1,5 +1,6 @@
 ﻿namespace NServiceBus.AcceptanceTesting.Support
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
@@ -12,7 +13,7 @@
         /// <summary>
         /// Scenario descriptors not supported for this test execution
         /// </summary>
-        IEnumerable<ScenarioDescriptor> UnsupportedScenarioDescriptors { get; }
+        IEnumerable<Type> UnsupportedScenarioDescriptorTypes { get; }
 
         /// <summary>
         /// 

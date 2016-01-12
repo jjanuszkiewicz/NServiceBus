@@ -2,7 +2,6 @@ namespace NServiceBus.Transports
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using NServiceBus.Routing;
     using Settings;
 
@@ -77,9 +76,9 @@ namespace NServiceBus.Transports
         /// <param name="createSendingConfiguration">The factory to create <see cref="IDispatchMessages"/>.</param>
         /// <param name="createReceivingConfiguration">The factory to create <see cref="IPushMessages"/>.</param>
         /// <param name="subscriptionManager">The instance of <see cref="IManageSubscriptions"/>.</param>
-        /// <param name="deliveryConstraints">The deliver constraints</param>
-        /// <param name="transactionMode"></param>
-        /// <param name="outboundRoutingPolicy"></param>
+        /// <param name="deliveryConstraints">The delivery constraints.</param>
+        /// <param name="transactionMode">The transaction mode.</param>
+        /// <param name="outboundRoutingPolicy">The outbound routing policy.</param>
         public FactoriesDefinitions(IEnumerable<Type> deliveryConstraints, TransportTransactionMode transactionMode, OutboundRoutingPolicy outboundRoutingPolicy, Func<string, TransportSendingConfigurationResult> createSendingConfiguration, Func<string, TransportReceivingConfigurationResult> createReceivingConfiguration = null, IManageSubscriptions subscriptionManager = null)
         {
             DeliveryConstraints = deliveryConstraints;

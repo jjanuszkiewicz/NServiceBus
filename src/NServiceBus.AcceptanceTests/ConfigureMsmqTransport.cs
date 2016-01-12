@@ -13,9 +13,9 @@ public class ConfigureMsmqTransport : IConfigureTestExecution
 {
     BusConfiguration busConfiguration;
 
-    public IEnumerable<ScenarioDescriptor> UnsupportedScenarioDescriptors { get; } = new ScenarioDescriptor[]
+    public IEnumerable<Type> UnsupportedScenarioDescriptorTypes { get; } = new []
     {
-        new AllTransportsWithCentralizedPubSubSupport()
+        typeof(AllTransportsWithCentralizedPubSubSupport)
     };
 
     public Task Configure(BusConfiguration configuration, IDictionary<string, string> settings)

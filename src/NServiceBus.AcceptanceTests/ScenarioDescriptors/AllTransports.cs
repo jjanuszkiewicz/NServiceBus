@@ -129,7 +129,7 @@
                         throw new InvalidOperationException($"{configurerTypeName} does not implement {typeof(IConfigureTestExecution).Name}.");
 
 
-                    if (configurer.UnsupportedScenarioDescriptors.Contains(scenarioDescriptor))
+                    if (configurer.UnsupportedScenarioDescriptorTypes.Contains(scenarioDescriptor.GetType()))
                     {
                         remove(rundescriptor);
                     }
