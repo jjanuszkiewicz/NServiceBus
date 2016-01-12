@@ -5,9 +5,7 @@
     using System.Linq;
     using System.Reflection;
     using AcceptanceTesting.Support;
-    using NServiceBus.DelayedDelivery;
     using NServiceBus.Hosting.Helpers;
-    using NServiceBus.Transports;
 
     public class AllTransports : ScenarioDescriptor
     {
@@ -40,7 +38,7 @@
     {
         public AllDtcTransports()
         {
-            AllTransportsFilter.Run(t => t.TransactionMode != TransportTransactionMode.TransactionScope, Remove);
+            ScenarioFilter.Run(this, Remove);
         }
     }
 
@@ -48,7 +46,7 @@
     {
         public AllNativeMultiQueueTransactionTransports()
         {
-            AllTransportsFilter.Run(t => t.TransactionMode < TransportTransactionMode.SendsAtomicWithReceive, Remove);
+            ScenarioFilter.Run(this, Remove);
         }
     }
 
@@ -56,7 +54,7 @@
     {
         public AllTransportsWithCentralizedPubSubSupport()
         {
-            AllTransportsFilter.Run(t => t.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast, Remove);
+            ScenarioFilter.Run(this, Remove);
         }
     }
 
@@ -64,7 +62,7 @@
     {
         public AllTransportsWithMessageDrivenPubSub()
         {
-            AllTransportsFilter.Run(t => t.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Multicast, Remove);
+            ScenarioFilter.Run(this, Remove);
         }
     }
 
@@ -72,7 +70,7 @@
     {
         public AllTransportsWithoutNativeDeferral()
         {
-            AllTransportsFilter.Run(t => t.DeliveryConstraints.Any(c => typeof(DelayedDeliveryConstraint).IsAssignableFrom(c)), Remove);
+            ScenarioFilter.Run(this, Remove);
         }
     }
 
@@ -108,18 +106,30 @@
         static List<Assembly> assemblies;
     }
 
-    public static class AllTransportsFilter
+    public static class ScenarioFilter
     {
-        public static void Run(Func<TransportDefinition, bool> condition, Func<RunDescriptor, bool> remove)
+        public static void Run(ScenarioDescriptor scenarioDescriptor, Func<RunDescriptor, bool> remove)
         {
+
             foreach (var rundescriptor in Transports.AllAvailable)
             {
                 var transportAssemblyQualifiedName = rundescriptor.Settings["Transport"];
                 var type = Type.GetType(transportAssemblyQualifiedName);
                 if (type != null)
                 {
-                    var transport = Activator.CreateInstance(type, true) as TransportDefinition;
-                    if (condition(transport))
+                    var configurerTypeName = "Configure" + type.Name;
+                    var configurerType = Type.GetType(configurerTypeName, false);
+
+                    if (configurerType == null)
+                        throw new InvalidOperationException($"Acceptance Test project must include a non-namespaced class named '{configurerTypeName}' implementing {typeof(IConfigureTestExecution).Name}. See {typeof(ConfigureMsmqTransport).FullName} for an example.");
+
+                    var configurer = Activator.CreateInstance(configurerType) as IConfigureTestExecution;
+
+                    if (configurer == null)
+                        throw new InvalidOperationException($"{configurerTypeName} does not implement {typeof(IConfigureTestExecution).Name}.");
+
+
+                    if (configurer.UnsupportedScenarioDescriptors.Contains(scenarioDescriptor))
                     {
                         remove(rundescriptor);
                     }

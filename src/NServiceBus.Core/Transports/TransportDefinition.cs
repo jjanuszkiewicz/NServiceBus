@@ -54,20 +54,6 @@ namespace NServiceBus.Transports
         /// </summary>
         public virtual bool RequiresConnectionString => true;
 
-        /// <summary>
-        /// Returns the list of supported delivery constraints for this transport.
-        /// </summary>
-        public virtual IEnumerable<Type> DeliveryConstraints => Enumerable.Empty<Type>();
-
-        /// <summary>
-        /// Gets the highest supported transaction mode for the this transport.
-        /// </summary>
-        public abstract TransportTransactionMode TransactionMode { get; }
-
-        /// <summary>
-        /// Returns the outbound routing policy selected for the transport.
-        /// </summary>
-        public abstract OutboundRoutingPolicy OutboundRoutingPolicy { get; }
 
         /// <summary>
         /// The factories for this transport.
@@ -91,8 +77,14 @@ namespace NServiceBus.Transports
         /// <param name="createSendingConfiguration">The factory to create <see cref="IDispatchMessages"/>.</param>
         /// <param name="createReceivingConfiguration">The factory to create <see cref="IPushMessages"/>.</param>
         /// <param name="subscriptionManager">The instance of <see cref="IManageSubscriptions"/>.</param>
-        public FactoriesDefinitions(Func<string, TransportSendingConfigurationResult> createSendingConfiguration, Func<string, TransportReceivingConfigurationResult> createReceivingConfiguration = null, IManageSubscriptions subscriptionManager = null)
+        /// <param name="deliveryConstraints">The deliver constraints</param>
+        /// <param name="transactionMode"></param>
+        /// <param name="outboundRoutingPolicy"></param>
+        public FactoriesDefinitions(IEnumerable<Type> deliveryConstraints, TransportTransactionMode transactionMode, OutboundRoutingPolicy outboundRoutingPolicy, Func<string, TransportSendingConfigurationResult> createSendingConfiguration, Func<string, TransportReceivingConfigurationResult> createReceivingConfiguration = null, IManageSubscriptions subscriptionManager = null)
         {
+            DeliveryConstraints = deliveryConstraints;
+            TransactionMode = transactionMode;
+            OutboundRoutingPolicy = outboundRoutingPolicy;
             SubscriptionManager = subscriptionManager;
             CreateReceivingConfiguration = createReceivingConfiguration;
             CreateSendingConfiguration = createSendingConfiguration;
@@ -112,5 +104,20 @@ namespace NServiceBus.Transports
         /// Gets the instance to manage subscriptions.
         /// </summary>
         public IManageSubscriptions SubscriptionManager { get; }
+
+        /// <summary>
+        /// Returns the list of supported delivery constraints for this transport.
+        /// </summary>
+        public IEnumerable<Type> DeliveryConstraints { get; }
+
+        /// <summary>
+        /// Gets the highest supported transaction mode for the this transport.
+        /// </summary>
+        public TransportTransactionMode TransactionMode { get; }
+
+        /// <summary>
+        /// Returns the outbound routing policy selected for the transport.
+        /// </summary>
+        public OutboundRoutingPolicy OutboundRoutingPolicy { get; }
     }
 }

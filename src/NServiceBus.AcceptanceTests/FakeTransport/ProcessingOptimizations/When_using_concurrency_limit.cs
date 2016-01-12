@@ -86,16 +86,17 @@
 
             protected override FactoriesDefinitions Initialize(SettingsHolder settings)
             {
-                return new FactoriesDefinitions(s => new TransportSendingConfigurationResult(() => new FakeDispatcher(), () => Task.FromResult(StartupCheckResult.Success)),
+                return new FactoriesDefinitions(
+                    Enumerable.Empty<Type>(),
+                    TransportTransactionMode.None,
+                    new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast),
+                    s => new TransportSendingConfigurationResult(() => new FakeDispatcher(), () => Task.FromResult(StartupCheckResult.Success)),
                     s => new TransportReceivingConfigurationResult(() => new FakeReceiver(), () => new FakeQueueCreator(), () => Task.FromResult(StartupCheckResult.Success)));
             }
 
             public override string ExampleConnectionStringForErrorMessage => null;
 
             public override bool RequiresConnectionString => false;
-            public override IEnumerable<Type> DeliveryConstraints => Enumerable.Empty<Type>();
-            public override TransportTransactionMode TransactionMode => TransportTransactionMode.None;
-            public override OutboundRoutingPolicy OutboundRoutingPolicy => new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
         }
     }
 }

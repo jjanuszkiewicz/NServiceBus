@@ -39,18 +39,15 @@
 
             protected override FactoriesDefinitions Initialize(SettingsHolder settings)
             {
-                return new FactoriesDefinitions(s => new TransportSendingConfigurationResult(() => null, () => null));
+                return new FactoriesDefinitions(
+                    new[] { typeof(DelayDeliveryWith) },
+                    TransportTransactionMode.None,
+                    new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast), 
+                    s => new TransportSendingConfigurationResult(() => null, () => null));
             }
 
             public override string ExampleConnectionStringForErrorMessage { get; } = String.Empty;
 
-            public override IEnumerable<Type> DeliveryConstraints => new[]
-            {
-                typeof(DelayDeliveryWith)
-            };
-
-            public override TransportTransactionMode TransactionMode { get; }
-            public override OutboundRoutingPolicy OutboundRoutingPolicy { get; }
         }
     }
 }

@@ -10,6 +10,11 @@
     public interface IConfigureTestExecution
     {
         /// <summary>
+        /// Scenario descriptors not supported for this test execution
+        /// </summary>
+        IEnumerable<ScenarioDescriptor> UnsupportedScenarioDescriptors { get; }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="configuration">The BusConfiguration instance.</param>

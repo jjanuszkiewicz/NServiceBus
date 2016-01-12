@@ -14,7 +14,7 @@ namespace NServiceBus.ConsistencyGuarantees
         /// </summary>
         public static TransportTransactionMode GetRequiredTransactionModeForReceives(this ReadOnlySettings settings)
         {
-            var transportTransactionSupport = settings.Get<TransportDefinition>().TransactionMode;
+            var transportTransactionSupport = settings.Get<TransportDefinition>().Support.TransactionMode;
 
             TransportTransactionMode requestedTransportTransactionMode;
             

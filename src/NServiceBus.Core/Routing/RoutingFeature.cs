@@ -68,7 +68,7 @@
             }
 
             context.RegisterStartupTask(b => new SubscriptionStoreRouteInformationProvider(context.Settings, b));
-            var outboundRoutingPolicy = transportDefinition.OutboundRoutingPolicy;
+            var outboundRoutingPolicy = transportDefinition.Support.OutboundRoutingPolicy;
             context.Pipeline.Register("UnicastSendRouterConnector", typeof(UnicastSendRouterConnector), "Determines how the message being sent should be routed");
             context.Pipeline.Register("UnicastReplyRouterConnector", typeof(UnicastReplyRouterConnector), "Determines how replies should be routed");
             if (outboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast)
@@ -138,7 +138,7 @@
             protected override Task OnStart(IBusSession session)
             {
                 var transportDefinition = settings.Get<TransportDefinition>();
-                if (transportDefinition.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast) //Publish via send
+                if (transportDefinition.Support.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast) //Publish via send
                 {
                     var subscriptions = builder.BuildAll<ISubscriptionStorage>().FirstOrDefault();
                     if (subscriptions != null)
