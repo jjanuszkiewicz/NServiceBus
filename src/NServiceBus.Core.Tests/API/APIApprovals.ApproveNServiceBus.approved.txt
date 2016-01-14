@@ -715,7 +715,7 @@ namespace NServiceBus
         public override string ExampleConnectionStringForErrorMessage { get; }
         public override bool RequiresConnectionString { get; }
         public override NServiceBus.Routing.EndpointInstance BindToLocalEndpoint(NServiceBus.Routing.EndpointInstance instance, NServiceBus.Settings.ReadOnlySettings settings) { }
-        protected override NServiceBus.Transports.FactoriesDefinitions Initialize(NServiceBus.Settings.SettingsHolder settings) { }
+        protected override NServiceBus.Transports.TransportInfrastructure Initialize(NServiceBus.Settings.SettingsHolder settings) { }
         public override string MakeCanonicalForm(string transportAddress) { }
         public override string ToTransportAddress(NServiceBus.LogicalAddress logicalAddress) { }
     }
@@ -2606,16 +2606,6 @@ namespace NServiceBus.Transports
         Default = 1,
         Isolated = 2,
     }
-    public class FactoriesDefinitions
-    {
-        public FactoriesDefinitions(System.Collections.Generic.IEnumerable<System.Type> deliveryConstraints, NServiceBus.TransportTransactionMode transactionMode, NServiceBus.Transports.OutboundRoutingPolicy outboundRoutingPolicy, System.Func<string, NServiceBus.Transports.TransportSendingConfigurationResult> createSendingConfiguration, System.Func<string, NServiceBus.Transports.TransportReceivingConfigurationResult> createReceivingConfiguration = null, NServiceBus.Transports.IManageSubscriptions subscriptionManager = null) { }
-        public System.Func<string, NServiceBus.Transports.TransportReceivingConfigurationResult> CreateReceivingConfiguration { get; }
-        public System.Func<string, NServiceBus.Transports.TransportSendingConfigurationResult> CreateSendingConfiguration { get; }
-        public System.Collections.Generic.IEnumerable<System.Type> DeliveryConstraints { get; }
-        public NServiceBus.Transports.OutboundRoutingPolicy OutboundRoutingPolicy { get; }
-        public NServiceBus.Transports.IManageSubscriptions SubscriptionManager { get; }
-        public NServiceBus.TransportTransactionMode TransactionMode { get; }
-    }
     [System.ObsoleteAttribute("No longer used, safe to remove. Will be removed in version 7.0.0.", true)]
     public interface IAuditMessages { }
     public interface ICancelDeferredMessages
@@ -2768,11 +2758,21 @@ namespace NServiceBus.Transports
         public bool HasSupportForMultiQueueNativeTransactions { get; set; }
         public bool RequireOutboxConsent { get; set; }
         public virtual bool RequiresConnectionString { get; }
-        public NServiceBus.Transports.FactoriesDefinitions Support { get; }
+        public NServiceBus.Transports.TransportInfrastructure Support { get; }
         public abstract NServiceBus.Routing.EndpointInstance BindToLocalEndpoint(NServiceBus.Routing.EndpointInstance instance, NServiceBus.Settings.ReadOnlySettings settings);
-        protected abstract NServiceBus.Transports.FactoriesDefinitions Initialize(NServiceBus.Settings.SettingsHolder settings);
+        protected abstract NServiceBus.Transports.TransportInfrastructure Initialize(NServiceBus.Settings.SettingsHolder settings);
         public virtual string MakeCanonicalForm(string transportAddress) { }
         public abstract string ToTransportAddress(NServiceBus.LogicalAddress logicalAddress);
+    }
+    public class TransportInfrastructure
+    {
+        public TransportInfrastructure(System.Collections.Generic.IEnumerable<System.Type> deliveryConstraints, NServiceBus.TransportTransactionMode transactionMode, NServiceBus.Transports.OutboundRoutingPolicy outboundRoutingPolicy, System.Func<string, NServiceBus.Transports.TransportSendingConfigurationResult> createSendingConfiguration, System.Func<string, NServiceBus.Transports.TransportReceivingConfigurationResult> createReceivingConfiguration = null, NServiceBus.Transports.IManageSubscriptions subscriptionManager = null) { }
+        public System.Func<string, NServiceBus.Transports.TransportReceivingConfigurationResult> CreateReceivingConfiguration { get; }
+        public System.Func<string, NServiceBus.Transports.TransportSendingConfigurationResult> CreateSendingConfiguration { get; }
+        public System.Collections.Generic.IEnumerable<System.Type> DeliveryConstraints { get; }
+        public NServiceBus.Transports.OutboundRoutingPolicy OutboundRoutingPolicy { get; }
+        public NServiceBus.Transports.IManageSubscriptions SubscriptionManager { get; }
+        public NServiceBus.TransportTransactionMode TransactionMode { get; }
     }
     public class TransportOperation
     {
