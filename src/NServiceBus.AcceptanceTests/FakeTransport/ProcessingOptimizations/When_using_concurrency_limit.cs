@@ -83,9 +83,9 @@
                 return logicalAddress.ToString();
             }
 
-            protected override FactoriesDefinitions Initialize(SettingsHolder settings)
+            protected override TransportInfrastructure Initialize(SettingsHolder settings)
             {
-                return new FactoriesDefinitions(
+                return new TransportInfrastructure(
                     Enumerable.Empty<Type>(),
                     TransportTransactionMode.None,
                     new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast),

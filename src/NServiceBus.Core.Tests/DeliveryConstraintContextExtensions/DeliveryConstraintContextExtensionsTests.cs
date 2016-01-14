@@ -36,9 +36,9 @@
                 throw new NotImplementedException();
             }
 
-            protected override FactoriesDefinitions Initialize(SettingsHolder settings)
+            protected override TransportInfrastructure Initialize(SettingsHolder settings)
             {
-                return new FactoriesDefinitions(
+                return new TransportInfrastructure(
                     new[] { typeof(DelayDeliveryWith) },
                     TransportTransactionMode.None,
                     new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast), 

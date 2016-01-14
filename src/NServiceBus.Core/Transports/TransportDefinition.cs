@@ -41,7 +41,7 @@ namespace NServiceBus.Transports
         /// </summary>
         /// <param name="settings">An instance of the current settings.</param>
         /// <returns>The supported factories.</returns>
-        protected abstract FactoriesDefinitions Initialize(SettingsHolder settings);
+        protected abstract TransportInfrastructure Initialize(SettingsHolder settings);
 
         /// <summary>
         /// Gets an example connection string to use when reporting lack of configured connection string to the user.
@@ -57,7 +57,7 @@ namespace NServiceBus.Transports
         /// <summary>
         /// The factories for this transport.
         /// </summary>
-        public FactoriesDefinitions Support { get; private set; }
+        public TransportInfrastructure Support { get; private set; }
 
         internal void InitializeTransportSupport(SettingsHolder settings)
         {
@@ -66,12 +66,12 @@ namespace NServiceBus.Transports
     }
 
     /// <summary>
-    /// Transport factory definitions.
+    /// Transport infrastructure definitions.
     /// </summary>
-    public class FactoriesDefinitions
+    public class TransportInfrastructure
     {
         /// <summary>
-        /// Creates a new instance of <see cref="FactoriesDefinitions"/>.
+        /// Creates a new instance of <see cref="TransportInfrastructure"/>.
         /// </summary>
         /// <param name="createSendingConfiguration">The factory to create <see cref="IDispatchMessages"/>.</param>
         /// <param name="createReceivingConfiguration">The factory to create <see cref="IPushMessages"/>.</param>
@@ -79,7 +79,7 @@ namespace NServiceBus.Transports
         /// <param name="deliveryConstraints">The delivery constraints.</param>
         /// <param name="transactionMode">The transaction mode.</param>
         /// <param name="outboundRoutingPolicy">The outbound routing policy.</param>
-        public FactoriesDefinitions(IEnumerable<Type> deliveryConstraints, TransportTransactionMode transactionMode, OutboundRoutingPolicy outboundRoutingPolicy, Func<string, TransportSendingConfigurationResult> createSendingConfiguration, Func<string, TransportReceivingConfigurationResult> createReceivingConfiguration = null, IManageSubscriptions subscriptionManager = null)
+        public TransportInfrastructure(IEnumerable<Type> deliveryConstraints, TransportTransactionMode transactionMode, OutboundRoutingPolicy outboundRoutingPolicy, Func<string, TransportSendingConfigurationResult> createSendingConfiguration, Func<string, TransportReceivingConfigurationResult> createReceivingConfiguration = null, IManageSubscriptions subscriptionManager = null)
         {
             DeliveryConstraints = deliveryConstraints;
             TransactionMode = transactionMode;

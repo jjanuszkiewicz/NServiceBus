@@ -71,9 +71,9 @@ namespace NServiceBus
         /// </summary>
         /// <param name="settings">Foo.</param>
         /// <returns>Foo.</returns>
-        protected override FactoriesDefinitions Initialize(SettingsHolder settings)
+        protected override TransportInfrastructure Initialize(SettingsHolder settings)
         {
-            return new FactoriesDefinitions(
+            return new TransportInfrastructure(
                 new[] {
                     typeof(DiscardIfNotReceivedBefore)
                 },
