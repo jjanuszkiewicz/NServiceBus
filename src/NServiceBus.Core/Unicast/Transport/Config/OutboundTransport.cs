@@ -14,10 +14,10 @@ namespace NServiceBus
             IsDefault = isDefault;
         }
 
-        public TransportSendingConfigurationResult Configure(ReadOnlySettings settings)
+        public TransportSendInfrastructure Configure(ReadOnlySettings settings)
         {
             var connectionString = settings.Get<TransportConnectionString>().GetConnectionStringOrRaiseError(Definition);
-            return Definition.Support.CreateSendingConfiguration(connectionString);
+            return Definition.Infrastructure.ConfigureSendInfrastructure(connectionString);
         }
     }
 }

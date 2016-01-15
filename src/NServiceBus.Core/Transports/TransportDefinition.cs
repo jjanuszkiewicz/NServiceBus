@@ -55,13 +55,13 @@ namespace NServiceBus.Transports
 
 
         /// <summary>
-        /// The factories for this transport.
+        /// The factories &amp; support infrastructure for this transport.
         /// </summary>
-        public TransportInfrastructure Support { get; private set; }
+        public TransportInfrastructure Infrastructure { get; private set; }
 
         internal void InitializeTransportSupport(SettingsHolder settings)
         {
-            Support = Initialize(settings);
+            Infrastructure = Initialize(settings);
         }
     }
 
@@ -73,36 +73,36 @@ namespace NServiceBus.Transports
         /// <summary>
         /// Creates a new instance of <see cref="TransportInfrastructure"/>.
         /// </summary>
-        /// <param name="createSendingConfiguration">The factory to create <see cref="IDispatchMessages"/>.</param>
-        /// <param name="createReceivingConfiguration">The factory to create <see cref="IPushMessages"/>.</param>
-        /// <param name="subscriptionManager">The instance of <see cref="IManageSubscriptions"/>.</param>
+        /// <param name="configureSendInfrastructure">The factory to create <see cref="IDispatchMessages"/>.</param>
+        /// <param name="configureReceiveInfrastructure">The factory to create <see cref="IPushMessages"/>.</param>
+        /// <param name="configureSubscriptionInfrastructure">The factory to create <see cref="IManageSubscriptions"/>.</param>
         /// <param name="deliveryConstraints">The delivery constraints.</param>
         /// <param name="transactionMode">The transaction mode.</param>
         /// <param name="outboundRoutingPolicy">The outbound routing policy.</param>
-        public TransportInfrastructure(IEnumerable<Type> deliveryConstraints, TransportTransactionMode transactionMode, OutboundRoutingPolicy outboundRoutingPolicy, Func<string, TransportSendingConfigurationResult> createSendingConfiguration, Func<string, TransportReceivingConfigurationResult> createReceivingConfiguration = null, IManageSubscriptions subscriptionManager = null)
+        public TransportInfrastructure(IEnumerable<Type> deliveryConstraints, TransportTransactionMode transactionMode, OutboundRoutingPolicy outboundRoutingPolicy, Func<string, TransportSendInfrastructure> configureSendInfrastructure, Func<string, TransportReceiveInfrastructure> configureReceiveInfrastructure = null, Func<TransportSubcriptionInfrastructure> configureSubscriptionInfrastructure = null)
         {
             DeliveryConstraints = deliveryConstraints;
             TransactionMode = transactionMode;
             OutboundRoutingPolicy = outboundRoutingPolicy;
-            SubscriptionManager = subscriptionManager;
-            CreateReceivingConfiguration = createReceivingConfiguration;
-            CreateSendingConfiguration = createSendingConfiguration;
+            ConfigureSubscriptionInfrastructure = configureSubscriptionInfrastructure;
+            ConfigureReceiveInfrastructure = configureReceiveInfrastructure;
+            ConfigureSendInfrastructure = configureSendInfrastructure;
         }
 
         /// <summary>
-        /// Gets the factory to receive message.
+        /// Gets the factories to receive message.
         /// </summary>
-        public Func<string, TransportReceivingConfigurationResult> CreateReceivingConfiguration { get; }
+        public Func<string, TransportReceiveInfrastructure> ConfigureReceiveInfrastructure { get; }
 
         /// <summary>
-        /// Gets the factory to send message.
+        /// Gets the factories to send message.
         /// </summary>
-        public Func<string, TransportSendingConfigurationResult> CreateSendingConfiguration { get; }
+        public Func<string, TransportSendInfrastructure> ConfigureSendInfrastructure { get; }
 
         /// <summary>
-        /// Gets the instance to manage subscriptions.
+        /// Gets the factory to manage subscriptions.
         /// </summary>
-        public IManageSubscriptions SubscriptionManager { get; }
+        public Func<TransportSubcriptionInfrastructure> ConfigureSubscriptionInfrastructure { get; }
 
         /// <summary>
         /// Returns the list of supported delivery constraints for this transport.

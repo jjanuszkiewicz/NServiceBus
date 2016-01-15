@@ -34,7 +34,7 @@
 
             var conventions = context.Settings.Get<Conventions>();
 
-            if (transportDefinition.Support.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Multicast)
+            if (transportDefinition.Infrastructure.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Multicast)
             {
                 context.RegisterStartupTask(b =>
                 {

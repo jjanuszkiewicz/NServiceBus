@@ -30,7 +30,7 @@ namespace NServiceBus
 
             context.Container.RegisterSingleton(inboundTransport.Definition);
 
-            var lazyReceiveConfigResult = new Lazy<TransportReceivingConfigurationResult>(()=> inboundTransport.Configure(context.Settings));
+            var lazyReceiveConfigResult = new Lazy<TransportReceiveInfrastructure>(()=> inboundTransport.Configure(context.Settings));
             context.Container.ConfigureComponent(b => lazyReceiveConfigResult.Value.MessagePumpFactory(), DependencyLifecycle.InstancePerCall);
             context.Container.ConfigureComponent(b => lazyReceiveConfigResult.Value.QueueCreatorFactory(), DependencyLifecycle.SingleInstance);
 
@@ -39,9 +39,9 @@ namespace NServiceBus
         
         class PrepareForReceiving : FeatureStartupTask
         {
-            private readonly Lazy<TransportReceivingConfigurationResult> lazy;
+            private readonly Lazy<TransportReceiveInfrastructure> lazy;
 
-            public PrepareForReceiving(Lazy<TransportReceivingConfigurationResult> lazy)
+            public PrepareForReceiving(Lazy<TransportReceiveInfrastructure> lazy)
             {
                 this.lazy = lazy;
             }

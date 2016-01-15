@@ -68,7 +68,7 @@
             }
 
             context.RegisterStartupTask(b => new SubscriptionStoreRouteInformationProvider(context.Settings, b));
-            var outboundRoutingPolicy = transportDefinition.Support.OutboundRoutingPolicy;
+            var outboundRoutingPolicy = transportDefinition.Infrastructure.OutboundRoutingPolicy;
             context.Pipeline.Register("UnicastSendRouterConnector", typeof(UnicastSendRouterConnector), "Determines how the message being sent should be routed");
             context.Pipeline.Register("UnicastReplyRouterConnector", typeof(UnicastReplyRouterConnector), "Determines how replies should be routed");
             if (outboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast)
@@ -100,7 +100,7 @@
                 }
                 else
                 {
-                    context.Container.RegisterSingleton(transportDefinition.Support.SubscriptionManager);
+                    context.Container.RegisterSingleton(transportDefinition.Infrastructure.ConfigureSubscriptionInfrastructure());
                     context.Pipeline.Register("NativeSubscribeTerminator", typeof(NativeSubscribeTerminator), "Requests the transport to subscribe to a given message type");
                     context.Pipeline.Register("NativeUnsubscribeTerminator", typeof(NativeUnsubscribeTerminator), "Requests the transport to unsubscribe to a given message type");
                 }
@@ -138,7 +138,7 @@
             protected override Task OnStart(IBusSession session)
             {
                 var transportDefinition = settings.Get<TransportDefinition>();
-                if (transportDefinition.Support.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast) //Publish via send
+                if (transportDefinition.Infrastructure.OutboundRoutingPolicy.Publishes == OutboundRoutingType.Unicast) //Publish via send
                 {
                     var subscriptions = builder.BuildAll<ISubscriptionStorage>().FirstOrDefault();
                     if (subscriptions != null)

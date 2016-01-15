@@ -92,7 +92,7 @@ namespace NServiceBus
                     {
                         messageLabelGenerator = headers => string.Empty;
                     }
-                    return new TransportSendingConfigurationResult(
+                    return new TransportSendInfrastructure(
                         () => new MsmqMessageSender(builder, messageLabelGenerator),
                         () =>
                         {
@@ -116,7 +116,7 @@ namespace NServiceBus
                         Timeout = transactionSettings.TransactionTimeout
                     };
 
-                    return new TransportReceivingConfigurationResult(
+                    return new TransportReceiveInfrastructure(
                         () => new MessagePump(guarantee => SelectReceiveStrategy(guarantee, transactionOptions)),
                         () => new QueueCreator(builder),
                         () =>

@@ -42,7 +42,7 @@
                     new[] { typeof(DelayDeliveryWith) },
                     TransportTransactionMode.None,
                     new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast), 
-                    s => new TransportSendingConfigurationResult(() => null, () => null));
+                    s => new TransportSendInfrastructure(() => null, () => null));
             }
 
             public override string ExampleConnectionStringForErrorMessage { get; } = String.Empty;

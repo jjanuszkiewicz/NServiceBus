@@ -104,6 +104,7 @@
     <Compile Include="Transports\IOutgoingTransportOperation.cs" />
     <Compile Include="Transports\MulticastTransportOperation.cs" />
     <Compile Include="Transports\TransportOperations.cs" />
+    <Compile Include="Transports\TransportSubcriptionInfrastructure.cs" />
     <Compile Include="Transports\UnicastTransportOperation.cs" />
     <Compile Include="Hosting\FaultHostInformationBehavior.cs" />
     <Compile Include="Recoverability\Faults\FaultToDispatchConnector.cs" />
@@ -183,8 +184,8 @@
     <Compile Include="Transports\Msmq\TimeToBeReceivedOverrideChecker.cs" />
     <Compile Include="Transports\StartupCheckResult.cs" />
     <Compile Include="Transports\Transport.cs" />
-    <Compile Include="Transports\TransportReceivingConfigurationResult.cs" />
-    <Compile Include="Transports\TransportSendingConfigurationResult.cs" />
+    <Compile Include="Transports\TransportReceiveInfrastructure.cs" />
+    <Compile Include="Transports\TransportSendInfrastructure.cs" />
     <Compile Include="UnicastRoutingTarget.cs" />
     <Compile Include="EnumerableEx.cs" />
     <Compile Include="IMessageHandlerContext.cs" />
