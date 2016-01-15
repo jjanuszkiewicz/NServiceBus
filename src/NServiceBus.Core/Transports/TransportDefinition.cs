@@ -79,7 +79,7 @@ namespace NServiceBus.Transports
         /// <param name="deliveryConstraints">The delivery constraints.</param>
         /// <param name="transactionMode">The transaction mode.</param>
         /// <param name="outboundRoutingPolicy">The outbound routing policy.</param>
-        public TransportInfrastructure(IEnumerable<Type> deliveryConstraints, TransportTransactionMode transactionMode, OutboundRoutingPolicy outboundRoutingPolicy, Func<string, TransportSendInfrastructure> configureSendInfrastructure, Func<string, TransportReceiveInfrastructure> configureReceiveInfrastructure = null, Func<TransportSubcriptionInfrastructure> configureSubscriptionInfrastructure = null)
+        public TransportInfrastructure(IEnumerable<Type> deliveryConstraints, TransportTransactionMode transactionMode, OutboundRoutingPolicy outboundRoutingPolicy, Func<string, TransportSendInfrastructure> configureSendInfrastructure, Func<string, TransportReceiveInfrastructure> configureReceiveInfrastructure = null, Func<TransportSubscriptionInfrastructure> configureSubscriptionInfrastructure = null)
         {
             DeliveryConstraints = deliveryConstraints;
             TransactionMode = transactionMode;
@@ -102,7 +102,7 @@ namespace NServiceBus.Transports
         /// <summary>
         /// Gets the factory to manage subscriptions.
         /// </summary>
-        public Func<TransportSubcriptionInfrastructure> ConfigureSubscriptionInfrastructure { get; }
+        public Func<TransportSubscriptionInfrastructure> ConfigureSubscriptionInfrastructure { get; }
 
         /// <summary>
         /// Returns the list of supported delivery constraints for this transport.

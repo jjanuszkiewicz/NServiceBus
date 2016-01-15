@@ -100,7 +100,10 @@
                 }
                 else
                 {
-                    context.Container.RegisterSingleton(transportDefinition.Infrastructure.ConfigureSubscriptionInfrastructure());
+                    var transportSubscriptionInfrastructure = transportDefinition.Infrastructure.ConfigureSubscriptionInfrastructure();
+                    var subscriptionManager = transportSubscriptionInfrastructure.SubscriptionManagerFactory();
+
+                    context.Container.RegisterSingleton(subscriptionManager);
                     context.Pipeline.Register("NativeSubscribeTerminator", typeof(NativeSubscribeTerminator), "Requests the transport to subscribe to a given message type");
                     context.Pipeline.Register("NativeUnsubscribeTerminator", typeof(NativeUnsubscribeTerminator), "Requests the transport to unsubscribe to a given message type");
                 }

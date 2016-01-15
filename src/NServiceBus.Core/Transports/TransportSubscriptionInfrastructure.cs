@@ -5,12 +5,12 @@ namespace NServiceBus.Transports
     /// <summary>
     /// Represents the result for configuring the transport for subscribing.
     /// </summary>
-    public class TransportSubcriptionInfrastructure
+    public class TransportSubscriptionInfrastructure
     {
         /// <summary>
         /// Creates new result object.
         /// </summary>
-        public TransportSubcriptionInfrastructure(Func<IManageSubscriptions> subscriptionManagerFactory)
+        public TransportSubscriptionInfrastructure(Func<IManageSubscriptions> subscriptionManagerFactory)
         {
             Guard.AgainstNull(nameof(subscriptionManagerFactory), subscriptionManagerFactory);
             SubscriptionManagerFactory = subscriptionManagerFactory;
