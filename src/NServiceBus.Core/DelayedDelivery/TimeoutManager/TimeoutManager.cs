@@ -1,15 +1,19 @@
 ﻿namespace NServiceBus.Features
 {
     using System;
-    using NServiceBus.DelayedDelivery;
-    using DeliveryConstraints;
+    using System.Collections.Generic;
+    using System.Threading;
+    using System.Threading.Tasks;
     using NServiceBus.ConsistencyGuarantees;
-    using Settings;
-    using Timeout.Core;
-    using Transports;
+    using NServiceBus.DelayedDelivery;
+    using NServiceBus.DeliveryConstraints;
+    using NServiceBus.ObjectBuilder;
+    using NServiceBus.Settings;
+    using NServiceBus.Timeout.Core;
+    using NServiceBus.Transports;
 
     /// <summary>
-    ///     Used to configure the timeout manager that provides message deferral.
+    /// Used to configure the timeout manager that provides message deferral.
     /// </summary>
     public class TimeoutManager : Feature
     {
@@ -24,39 +28,21 @@
         }
 
         /// <summary>
-        ///     See <see cref="Feature.Setup" />.
+        /// See <see cref="Feature.Setup" />.
         /// </summary>
         protected internal override void Setup(FeatureConfigurationContext context)
         {
-            string processorAddress;
-            var errorQueueAddress = ErrorQueueSettings.GetConfiguredErrorQueue(context.Settings);
+            var storageCleaner = new RetryStorageCleaner();
 
-            var requiredTransactionSupport = context.Settings.GetRequiredTransactionModeForReceives();
+            SetupStorageSatellite(context, storageCleaner);
 
-            var messageProcessorPipeline = context.AddSatellitePipeline("Timeout Message Processor", "Timeouts", requiredTransactionSupport, PushRuntimeSettings.Default, out processorAddress);
-            messageProcessorPipeline.Register(new MoveFaultsToErrorQueueBehavior.Registration(errorQueueAddress, processorAddress));
-            messageProcessorPipeline.Register(new FirstLevelRetriesBehavior.Registration("Timeouts"));
-            messageProcessorPipeline.Register<StoreTimeoutBehavior.Registration>();
-            context.Container.ConfigureComponent(b => new StoreTimeoutBehavior(b.Build<ExpiredTimeoutsPoller>(),
-                b.Build<IDispatchMessages>(),
-                b.Build<IPersistTimeouts>(),
-                context.Settings.EndpointName().ToString()), DependencyLifecycle.SingleInstance);
+            var dispatcherAddress = SetupDispatcherSatellite(context, storageCleaner);
 
-            context.Settings.Get<TimeoutManagerAddressConfiguration>().Set(processorAddress);
+            SetupTimeoutPoller(context, dispatcherAddress);
+        }
 
-            string dispatcherAddress;
-            var dispatcherProcessorPipeline = context.AddSatellitePipeline("Timeout Dispatcher Processor", "TimeoutsDispatcher", requiredTransactionSupport, PushRuntimeSettings.Default, out dispatcherAddress);
-            dispatcherProcessorPipeline.Register(new MoveFaultsToErrorQueueBehavior.Registration(errorQueueAddress, dispatcherAddress));
-            dispatcherProcessorPipeline.Register(new FirstLevelRetriesBehavior.Registration("TimeoutsDispatcher"));
-            dispatcherProcessorPipeline.Register("TimeoutDispatcherProcessor", typeof(DispatchTimeoutBehavior), "Dispatches timeout messages");
-            context.Container.ConfigureComponent(b => new DispatchTimeoutBehavior(
-                b.Build<IDispatchMessages>(),
-                b.Build<IPersistTimeouts>(),
-                requiredTransactionSupport),
-                DependencyLifecycle.InstancePerCall);
-
-            context.RegisterStartupTask(b => new TimeoutPollerRunner(b.Build<ExpiredTimeoutsPoller>()));
-
+        static void SetupTimeoutPoller(FeatureConfigurationContext context, string dispatcherAddress)
+        {
             context.Container.ConfigureComponent(b =>
             {
                 var waitTime = context.Settings.Get<TimeSpan>("TimeToWaitBeforeTriggeringCriticalErrorForTimeoutPersisterReceiver");
@@ -69,11 +55,95 @@
 
                 return new ExpiredTimeoutsPoller(b.Build<IQueryTimeouts>(), b.Build<IDispatchMessages>(), dispatcherAddress, circuitBreaker);
             }, DependencyLifecycle.SingleInstance);
+
+            context.RegisterStartupTask(b => new TimeoutPollerRunner(b.Build<ExpiredTimeoutsPoller>()));
+        }
+
+        static string SetupDispatcherSatellite(FeatureConfigurationContext context, RetryStorageCleaner storageCleaner)
+        {
+            var errorQueueAddress = ErrorQueueSettings.GetConfiguredErrorQueue(context.Settings);
+            var requiredTransactionSupport = context.Settings.GetRequiredTransactionModeForReceives();
+
+            string dispatcherAddress;
+            var dispatcherProcessorPipeline = context.AddSatellitePipeline("Timeout Dispatcher Processor", "TimeoutsDispatcher", requiredTransactionSupport, PushRuntimeSettings.Default, out dispatcherAddress);
+
+
+            dispatcherProcessorPipeline.Register("DispatchTimeoutRecoverability",
+                b => CreateTimeoutRecoverabilityBehavior(errorQueueAddress, dispatcherAddress, b, storageCleaner),
+                "Handles failures when dispatching timeouts");
+      
+            dispatcherProcessorPipeline.Register("TimeoutDispatcherProcessor", b => new DispatchTimeoutBehavior(
+                b.Build<IDispatchMessages>(),
+                b.Build<IPersistTimeouts>(),
+                requiredTransactionSupport),
+                "Terminates the satellite responsible for dispatching expired timeouts to their final destination");
+            return dispatcherAddress;
+        }
+
+        static void SetupStorageSatellite(FeatureConfigurationContext context, RetryStorageCleaner storageCleaner)
+        {
+            var errorQueueAddress = ErrorQueueSettings.GetConfiguredErrorQueue(context.Settings);
+            var requiredTransactionSupport = context.Settings.GetRequiredTransactionModeForReceives();
+
+            string processorAddress;
+            var messageProcessorPipeline = context.AddSatellitePipeline("Timeout Message Processor", "Timeouts", requiredTransactionSupport, PushRuntimeSettings.Default, out processorAddress);
+
+
+            messageProcessorPipeline.Register("StoreTimeoutRecoverability",
+                b => CreateTimeoutRecoverabilityBehavior(errorQueueAddress, processorAddress, b, storageCleaner),
+                "Handles failures when storing timeouts");
+
+            messageProcessorPipeline.Register("StoreTimeoutTerminator", b => new StoreTimeoutBehavior(b.Build<ExpiredTimeoutsPoller>(),
+                b.Build<IDispatchMessages>(),
+                b.Build<IPersistTimeouts>(),
+                context.Settings.EndpointName().ToString()),
+                "Terminates the satellite responsible for storing timeouts into timeout storage");
+
+            context.Settings.Get<TimeoutManagerAddressConfiguration>().Set(processorAddress);
+        }
+
+        static TimeoutRecoverabilityBehavior CreateTimeoutRecoverabilityBehavior(string errorQueueAddress, string processorAddress, IBuilder b, RetryStorageCleaner storageCleaner)
+        {
+            var behavior = new TimeoutRecoverabilityBehavior(errorQueueAddress, processorAddress, b.Build<IDispatchMessages>(), b.Build<CriticalError>());
+
+            storageCleaner.RegisterForCleanup(behavior);
+
+            return behavior;
         }
 
         bool HasAlternateTimeoutManagerBeenConfigured(ReadOnlySettings settings)
         {
             return settings.Get<TimeoutManagerAddressConfiguration>().TransportAddress != null;
+        }
+
+        class RetryStorageCleaner : FeatureStartupTask
+        {
+            public RetryStorageCleaner()
+            {
+                behaviors = new List<TimeoutRecoverabilityBehavior>();
+            }
+
+            protected override Task OnStart(IBusSession session)
+            {
+                var clearingInterval = TimeSpan.FromMinutes(5);
+
+                timer = new Timer(state => behaviors.ForEach(b => b.ClearFailures()), null, clearingInterval, clearingInterval);
+                return TaskEx.Completed;
+            }
+
+            protected override Task OnStop(IBusSession session)
+            {
+                timer?.Dispose();
+                return TaskEx.Completed;
+            }
+
+            public void RegisterForCleanup(TimeoutRecoverabilityBehavior timeoutRecoverabilityBehavior)
+            {
+                behaviors.Add(timeoutRecoverabilityBehavior);
+            }
+
+            List<TimeoutRecoverabilityBehavior> behaviors;
+            Timer timer;
         }
     }
 }

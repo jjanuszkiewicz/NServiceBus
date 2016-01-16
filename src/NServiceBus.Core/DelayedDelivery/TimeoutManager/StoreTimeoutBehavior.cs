@@ -2,7 +2,6 @@ namespace NServiceBus
 {
     using System;
     using System.Threading.Tasks;
-    using Pipeline;
     using Routing;
     using Timeout.Core;
     using Transports;
@@ -79,15 +78,5 @@ namespace NServiceBus
         IDispatchMessages dispatcher;
         IPersistTimeouts persister;
         string owningTimeoutManager;
-
-        public class Registration : RegisterStep
-        {
-            public Registration()
-                : base("TimeoutMessageProcessor", typeof(StoreTimeoutBehavior), "Processes timeout messages")
-            {
-                InsertBeforeIfExists("FirstLevelRetries");
-                InsertBeforeIfExists("ReceivePerformanceDiagnosticsBehavior");
-            }
-        }
     }
 }
