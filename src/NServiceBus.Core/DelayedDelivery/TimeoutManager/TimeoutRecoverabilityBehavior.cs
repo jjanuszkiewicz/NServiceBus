@@ -65,7 +65,7 @@ namespace NServiceBus
         }
 
         ConcurrentDictionary<string, int> failuresPerMessage = new ConcurrentDictionary<string, int>();
-        static int MaxRetries = 5;
+        static int MaxRetries = 4;
 
         string localAddress;
         string errorQueueAddress;
