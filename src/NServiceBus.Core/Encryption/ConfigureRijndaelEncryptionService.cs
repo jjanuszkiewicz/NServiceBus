@@ -3,7 +3,7 @@ namespace NServiceBus
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using Config;
+    using NServiceBus.Config;
     using NServiceBus.Encryption;
     using NServiceBus.ObjectBuilder;
     using NServiceBus.Settings;
@@ -14,15 +14,15 @@ namespace NServiceBus
     public static class ConfigureRijndaelEncryptionService
     {
         /// <summary>
-        /// Use 256 bit AES encryption based on the Rijndael cipher. 
+        /// Use 256 bit AES encryption based on the Rijndael cipher.
         /// </summary>
-        /// <param name="config">The <see cref="BusConfiguration"/> instance to apply the settings to.</param>
+        /// <param name="config">The <see cref="BusConfiguration" /> instance to apply the settings to.</param>
         public static void RijndaelEncryptionService(this BusConfiguration config)
         {
             Guard.AgainstNull(nameof(config), config);
-            RegisterEncryptionService(config, context =>
+            RegisterEncryptionService(config, () =>
             {
-                var section = context.Build<ReadOnlySettings>()
+                var section = config.Settings
                     .GetConfigSection<RijndaelEncryptionServiceConfig>();
                 return ConvertConfigToRijndaelService(section);
             });
@@ -50,7 +50,7 @@ namespace NServiceBus
             }
             var encryptionKeys = section.ExpiredKeys
                 .Cast<RijndaelExpiredKey>()
-                .Select(x=>x.Key)
+                .Select(x => x.Key)
                 .ToList();
             if (encryptionKeys.Any(string.IsNullOrWhiteSpace))
             {
@@ -69,9 +69,9 @@ namespace NServiceBus
         }
 
         /// <summary>
-        /// Use 256 bit AES encryption based on the Rijndael cipher. 
+        /// Use 256 bit AES encryption based on the Rijndael cipher.
         /// </summary>
-        /// <param name="config">The <see cref="BusConfiguration"/> instance to apply the settings to.</param>
+        /// <param name="config">The <see cref="BusConfiguration" /> instance to apply the settings to.</param>
         /// <param name="encryptionKey">The default encryption key to use.</param>
         /// <param name="expiredKeys">The secondary expired keys that will be used for decryption.</param>
         public static void RijndaelEncryptionService(this BusConfiguration config, string encryptionKey, List<string> expiredKeys = null)
@@ -85,10 +85,10 @@ namespace NServiceBus
             }
             else
             {
-                VerifyKeys(expiredKeys);   
+                VerifyKeys(expiredKeys);
             }
 
-            RegisterEncryptionService(config, context => BuildRijndaelEncryptionService(encryptionKey, expiredKeys));
+            RegisterEncryptionService(config, () => BuildRijndaelEncryptionService(encryptionKey, expiredKeys));
         }
 
         internal static void VerifyKeys(List<string> expiredKeys)
@@ -107,23 +107,40 @@ namespace NServiceBus
             }
         }
 
-        static IEncryptionService BuildRijndaelEncryptionService(string encryptionKey,List<string> expiredKeys)
+        static IEncryptionService BuildRijndaelEncryptionService(string encryptionKey, List<string> expiredKeys)
         {
             return new RijndaelEncryptionService(encryptionKey, expiredKeys);
         }
 
         /// <summary>
-        /// Register a custom <see cref="IEncryptionService"/> to be used for message encryption.
+        /// Register a custom <see cref="IEncryptionService" /> to be used for message encryption.
         /// </summary>
-        /// <param name="config">The <see cref="BusConfiguration"/> instance to apply the settings to.</param>
-        /// <param name="func">A delegate that constructs the insatnce of <see cref="IEncryptionService"/> to use for all encryption.</param>
+        /// <param name="config">The <see cref="BusConfiguration" /> instance to apply the settings to.</param>
+        /// <param name="func">
+        /// A delegate that constructs the instance of <see cref="IEncryptionService" /> to use for all
+        /// encryption.
+        /// </param>
+        [ObsoleteEx(ReplacementTypeOrMember = "RegisterEncryptionService(this BusConfiguration config, Func<IEncryptionService> func)", RemoveInVersion = "7.0", TreatAsErrorFromVersion = "6.0", Message = "It is no longer possible to access the builder to create an encryption service. If you require container access use your container directly in the factory.")]
         public static void RegisterEncryptionService(this BusConfiguration config, Func<IBuilder, IEncryptionService> func)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Register a custom <see cref="IEncryptionService" /> to be used for message encryption.
+        /// </summary>
+        /// <param name="config">The <see cref="BusConfiguration" /> instance to apply the settings to.</param>
+        /// <param name="func">
+        /// A delegate that constructs the instance of <see cref="IEncryptionService" /> to use for all
+        /// encryption.
+        /// </param>
+        public static void RegisterEncryptionService(this BusConfiguration config, Func<IEncryptionService> func)
         {
             Guard.AgainstNull(nameof(config), config);
             config.Settings.Set("EncryptionServiceConstructor", func);
         }
 
-        internal static bool GetEncryptionServiceConstructor(this ReadOnlySettings settings, out Func<IBuilder, IEncryptionService> func)
+        internal static bool GetEncryptionServiceConstructor(this ReadOnlySettings settings, out Func<IEncryptionService> func)
         {
             return settings.TryGet("EncryptionServiceConstructor", out func);
         }
