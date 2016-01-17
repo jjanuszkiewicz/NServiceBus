@@ -64,13 +64,14 @@ namespace NServiceBus
             failuresPerMessage.Clear();
         }
 
+        CriticalError criticalError;
+        IDispatchMessages dispatcher;
+        string errorQueueAddress;
+
         ConcurrentDictionary<string, int> failuresPerMessage = new ConcurrentDictionary<string, int>();
-        static int MaxRetries = 4;
 
         string localAddress;
-        string errorQueueAddress;
-        IDispatchMessages dispatcher;
-        CriticalError criticalError;
+        static int MaxRetries = 4;
 
         static ILog Logger = LogManager.GetLogger<TimeoutRecoverabilityBehavior>();
     }
