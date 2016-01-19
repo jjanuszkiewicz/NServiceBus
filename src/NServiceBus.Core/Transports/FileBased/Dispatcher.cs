@@ -1,26 +1,20 @@
-namespace NServiceBus.Transports.FileBased
+namespace NServiceBus
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
     using NServiceBus.Extensibility;
-    using NServiceBus.Routing;
+    using NServiceBus.Transports;
 
     class Dispatcher : IDispatchMessages
     {
-        public Task Dispatch(IEnumerable<TransportOperation> outgoingMessages, ContextBag context)
+        public Task Dispatch(TransportOperations outgoingMessages, ContextBag context)
         {
-            foreach (var transportOperation in outgoingMessages)
+            foreach (var transportOperation in outgoingMessages.UnicastTransportOperations)
             {
-                var addressTag = transportOperation.DispatchOptions.AddressTag as UnicastAddressTag;
-
-                if (addressTag == null)
-                {
-                    throw new InvalidOperationException("The filebased transport only support unicast addressing");
-                }
-
-                var basePath = Path.Combine("c:\\bus", addressTag.Destination);
+             
+                var basePath = Path.Combine("c:\\bus", transportOperation.Destination);
                 var nativeMessageId = Guid.NewGuid().ToString();
                 var bodyPath = Path.Combine(basePath, ".bodies", nativeMessageId) + ".xml"; //TODO: pick the correct ending based on the serialized type
 
@@ -36,7 +30,7 @@ namespace NServiceBus.Transports.FileBased
 
                 var messagePath = Path.Combine(basePath, nativeMessageId) + ".txt";
 
-                if (transportOperation.DispatchOptions.RequiredDispatchConsistency != DispatchConsistency.Isolated &&
+                if (transportOperation.RequiredDispatchConsistency != DispatchConsistency.Isolated &&
                     context.TryGet(out transaction))
                 {
                     transaction.Enlist(messagePath, messageContents);
@@ -52,7 +46,7 @@ namespace NServiceBus.Transports.FileBased
                 }
             }
 
-            return TaskEx.Completed;
+            return TaskEx.CompletedTask;
         }
     }
 }

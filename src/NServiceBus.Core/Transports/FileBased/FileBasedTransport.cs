@@ -3,11 +3,12 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Threading.Tasks;
     using NServiceBus.Performance.TimeToBeReceived;
+    using NServiceBus.Routing;
     using NServiceBus.Settings;
     using NServiceBus.Transports;
-    using NServiceBus.Transports.FileBased;
-
+    
     /// <summary>
     /// A file based transport.
     /// </summary>
@@ -21,16 +22,16 @@
         /// <summary>
         /// Returns the discriminator for this endpoint instance.
         /// </summary>
-        public override string GetDiscriminatorForThisEndpointInstance()
+        string GetDiscriminatorForThisEndpointInstance()
         {
             return "\\";
         }
 
         /// <summary>
-        /// Gets the supported transactionallity for this transport.
+        /// Gets the highest supported transaction mode for the this transport.
         /// </summary>
-        public override TransactionSupport GetTransactionSupport() => TransactionSupport.MultiQueue;
-
+        public override TransportTransactionMode GetSupportedTransactionMode() => TransportTransactionMode.SendsAtomicWithReceive;
+     
         /// <summary>
         /// Will be called if the transport has indicated that it has native support for pub sub.
         /// Creates a transport address for the input queue defined by a logical address.
@@ -41,20 +42,27 @@
         }
 
         /// <summary>
+        /// Returns the discriminator for this endpoint instance.
+        /// </summary>
+        public override EndpointInstance BindToLocalEndpoint(EndpointInstance instance, ReadOnlySettings settings)
+        {
+            return instance;
+        }
+
+        /// <summary>
         /// Configures transport for receiving.
         /// </summary>
-        protected internal override void ConfigureForReceiving(TransportReceivingConfigurationContext context)
+        protected internal override TransportReceivingConfigurationResult ConfigureForReceiving(TransportReceivingConfigurationContext context)
         {
-            context.SetMessagePumpFactory(ce => new MessagePump());
-            context.SetQueueCreatorFactory(() => new QueueCreator());
+            return new TransportReceivingConfigurationResult(() => new DevelopmentTransportMessagePump(), () => new DevelopmentTransportQueueCreator(), () => Task.FromResult(StartupCheckResult.Success));
         }
 
         /// <summary>
         /// Configures transport for sending.
         /// </summary>
-        protected internal override void ConfigureForSending(TransportSendingConfigurationContext context)
+        protected internal override TransportSendingConfigurationResult ConfigureForSending(TransportSendingConfigurationContext context)
         {
-            context.SetDispatcherFactory(() => new Dispatcher());
+            return new TransportSendingConfigurationResult(() => new Dispatcher(), () => Task.FromResult(StartupCheckResult.Success));
         }
 
         /// <summary>
@@ -75,7 +83,7 @@
         /// <returns>The transport address.</returns>
         public override string ToTransportAddress(LogicalAddress logicalAddress)
         {
-            return Path.Combine(logicalAddress.EndpointInstanceName.EndpointName.ToString(), logicalAddress.Qualifier ?? "");
+            return Path.Combine(logicalAddress.EndpointInstance.Endpoint.ToString(), logicalAddress.Qualifier ?? "");
         }
 
         /// <summary>
@@ -83,7 +91,7 @@
         /// </summary>
         public override OutboundRoutingPolicy GetOutboundRoutingPolicy(ReadOnlySettings settings)
         {
-            return new OutboundRoutingPolicy(OutboundRoutingType.DirectSend, OutboundRoutingType.DirectSend, OutboundRoutingType.DirectSend);
+            return new OutboundRoutingPolicy(OutboundRoutingType.Unicast, OutboundRoutingType.Unicast, OutboundRoutingType.Unicast);
         }
     }
 }

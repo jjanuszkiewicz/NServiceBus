@@ -1,4 +1,4 @@
-namespace NServiceBus.Transports.FileBased
+namespace NServiceBus
 {
     using System.Collections.Generic;
     using System.IO;
@@ -12,7 +12,7 @@ namespace NServiceBus.Transports.FileBased
         {
             emptyNamespace = new XmlSerializerNamespaces();
             emptyNamespace.Add("", "");
-            serializer = new XmlSerializer(typeof(List<Header>), new XmlRootAttribute("Headers"));
+            serializer = new System.Xml.Serialization.XmlSerializer(typeof(List<DevelopmentTransportHeader>), new XmlRootAttribute("Headers"));
         }
 
         public static string ToXml(Dictionary<string, string> dictionary)
@@ -20,7 +20,7 @@ namespace NServiceBus.Transports.FileBased
             var builder = new StringBuilder();
             using (var writer = new StringWriter(builder))
             {
-                var headers = dictionary.Select(x => new Header
+                var headers = dictionary.Select(x => new DevelopmentTransportHeader
                 {
                     Key = x.Key,
                     Value = x.Value
@@ -34,19 +34,19 @@ namespace NServiceBus.Transports.FileBased
         {
             using (var reader = new StringReader(value))
             {
-                var list = (List<Header>) serializer.Deserialize(reader);
+                var list = (List<DevelopmentTransportHeader>) serializer.Deserialize(reader);
                 return list.ToDictionary(header => header.Key, header => header.Value);
             }
         }
 
-        static XmlSerializer serializer;
+        static System.Xml.Serialization.XmlSerializer serializer;
         static XmlSerializerNamespaces emptyNamespace;
     }
 
     /// <summary>
     /// DTO for the serializing headers.
     /// </summary>
-    public class Header
+    public class DevelopmentTransportHeader
     {
         /// <summary>
         /// The header key.

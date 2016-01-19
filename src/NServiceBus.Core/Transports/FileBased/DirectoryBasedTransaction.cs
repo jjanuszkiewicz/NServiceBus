@@ -1,11 +1,12 @@
-namespace NServiceBus.Transports.FileBased
+namespace NServiceBus
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using NServiceBus.Transports;
 
-    class DirectoryBasedTransaction
+    class DirectoryBasedTransaction:TransportTransaction
     {
         public DirectoryBasedTransaction(string basePath)
         {

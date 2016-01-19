@@ -239,7 +239,6 @@
     <Compile Include="Transports\TransportTransaction.cs" />
     <Compile Include="Transports\TransportTransactionMode.cs" />
     <Compile Include="Transports\FileBased\HeaderSerializer.cs" />
-    <Compile Include="Transports\TransactionSupport.cs" />
     <Compile Include="Transports\Sending.cs" />
     <Compile Include="Transports\TransportAddresses.cs" />
     <Compile Include="Routing\UnicastRoutingTable.cs" />
@@ -252,9 +251,8 @@
     <Compile Include="Transports\FileBased\DirectoryBasedTransaction.cs" />
     <Compile Include="Transports\FileBased\Dispatcher.cs" />
     <Compile Include="Transports\FileBased\FileBasedTransport.cs" />
-    <Compile Include="Transports\FileBased\MessagePump.cs" />
-    <Compile Include="Transports\FileBased\QueueCreator.cs" />
-    <Compile Include="Transports\IManageSubscriptionsExtensions_obsolete.cs" />
+    <Compile Include="Transports\FileBased\DevelopmentTransportMessagePump.cs" />
+    <Compile Include="Transports\FileBased\DevelopmentTransportQueueCreator.cs" />
     <Compile Include="Transports\IncomingMessageExtensions.cs" />
     <Compile Include="Transports\Msmq\MsmqConnectionStringBuilder.cs" />
     <Compile Include="Container\ContainerCustomizations.cs" />

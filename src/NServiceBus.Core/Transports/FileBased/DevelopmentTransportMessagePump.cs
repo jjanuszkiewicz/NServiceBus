@@ -1,4 +1,4 @@
-﻿namespace NServiceBus.Transports.FileBased
+﻿namespace NServiceBus
 {
     using System;
     using System.Collections.Concurrent;
@@ -9,18 +9,20 @@
     using System.Threading.Tasks;
     using NServiceBus.Extensibility;
     using NServiceBus.Logging;
+    using NServiceBus.Transports;
 
-    class MessagePump : IPushMessages
+    class DevelopmentTransportMessagePump : IPushMessages
     {
-        static ILog Logger = LogManager.GetLogger<MessagePump>();
+        static ILog Logger = LogManager.GetLogger<DevelopmentTransportMessagePump>();
 
-        public void Init(Func<PushContext, Task> pipe, PushSettings settings)
+        public Task Init(Func<PushContext, Task> pipe, CriticalError criticalError, PushSettings settings)
         {
             pipeline = pipe;
             path = Path.Combine("c:\\bus", settings.InputQueue);
             purgeOnStartup = settings.PurgeOnStartup;
-        }
 
+            return TaskEx.CompletedTask;
+        }
 
         public void Start(PushRuntimeSettings limitations)
         {
@@ -154,14 +156,21 @@
                         return;
                     }
                 }
+                var tokenSource = new CancellationTokenSource();
 
                 using (var bodyStream = new FileStream(bodyPath, FileMode.Open))
                 {
                     var context = new ContextBag();
                     context.Set(transaction);
 
-                    var pushContext = new PushContext(messageId, headers, bodyStream, context);
+                    var pushContext = new PushContext(messageId, headers, bodyStream, transaction, tokenSource, context);
                     await pipeline(pushContext).ConfigureAwait(false);
+                }
+
+                if (tokenSource.IsCancellationRequested)
+                {
+                    transaction.Rollback();
+                    return;
                 }
 
                 transaction.Commit();
